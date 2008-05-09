@@ -1,8 +1,6 @@
 from django.conf import settings
 from django.contrib.auth.models import User, Group, check_password
 import urllib
-import simplejson
-from restclient import GET
 from django.core.exceptions import ImproperlyConfigured
 
 def validate_wind_ticket(ticketid):
@@ -40,14 +38,8 @@ class WindAuthBackend:
             except User.DoesNotExist:
                 user = User(username=username, password='wind user')
                 user.set_unusable_password()
-                user.email = username + "@columbia.edu"
-                cdap_base = "http://cdap.ccnmtl.columbia.edu/"
-                if hasattr(settings,'CDAP_BASE'):
-                    cdap_base = settings.CDAP_BASE
-                r = simplejson.loads(GET(cdap_base + "?uni=%s" % username))
-                if r['found']:
-                    user.last_name = r['lastname'] or r['sn']
-                    user.first_name = r['firstname'] or r['givenName']
+                for handler in self.get_profile_handlers():
+                    handler.process(user)
                 user.save()
 
             for handler in self.get_mappers():
@@ -66,15 +58,15 @@ class WindAuthBackend:
         except User.DoesNotExist:
             return None
 
-    def load_mapper(self,path):
+    def load_handler(self,path):
         i = path.rfind('.')
         module, attr = path[:i], path[i+1:]
         try:
             mod = __import__(module, {}, {}, [attr])
         except ImportError, e:
-            raise ImproperlyConfigured, 'Error importing wind affil handler %s: "%s"' % (module, e)
+            raise ImproperlyConfigured, 'Error importing wind handler %s: "%s"' % (module, e)
         except ValueError, e:
-            raise ImproperlyConfigured, 'Error importing wind affil handler. Is WIND_AFFIL_HANDLERS a correctly defined list or tuple?'
+            raise ImproperlyConfigured, 'Error importing wind handler. '
         try:
             cls = getattr(mod, attr)
         except AttributeError:
@@ -87,8 +79,38 @@ class WindAuthBackend:
         if not hasattr(settings,'WIND_AFFIL_HANDLERS'):
             return []
         for mapper_path in settings.WIND_AFFIL_HANDLERS:
-            mappers.append(self.load_mapper(mapper_path))
+            mappers.append(self.load_handler(mapper_path))
         return mappers
+
+    def get_profile_handlers(self):
+        from django.conf import settings
+        handlers = []
+        if not hasattr(settings,'WIND_PROFILE_HANDLERS'):
+            return []
+        for handler_path in settings.WIND_PROFILE_HANDLERS:
+            handlers.append(self.load_handler(handler_path))
+        return handlers    
+
+class CDAPProfileHandler:
+    """ fills in email, last_name, first_name from CDAP """
+    def process(self,user):
+        from restclient import GET
+        import httplib2
+        import simplejson
+        user.email = user.username + "@columbia.edu"
+        cdap_base = "http://cdap.ccnmtl.columbia.edu/"
+        if hasattr(settings,'CDAP_BASE'):
+            cdap_base = settings.CDAP_BASE
+        try:
+            r = simplejson.loads(GET(cdap_base + "?uni=%s" % user.username))
+            if r.get('found',False):
+                user.last_name = r.get('lastname',r.get('sn',''))
+                user.first_name = r.get('firstname',r.get('givenName',''))
+        except httplib2.ServerNotFoundError:
+            # cdap.ccnmtl.columbia.edu (or whatever the CDAP server is set to)
+            # is probably not in /etc/hosts on this server
+            pass
+        user.save()
 
 class AffilGroupMapper:
     """ makes sure that the user is in a Group for every wind affil,
