@@ -116,16 +116,24 @@ class AffilGroupMapper:
     """ makes sure that the user is in a Group for every wind affil,
         autovivifying Groups if necessary """
 
-    # QUESTION: do we want to remove their username group?
-    # I can see it getting noisy since, as is, a group is
-    # created for every user.
-
     def map(self,user,affils):
         # we also make a "pseudo" affil group ALL_CU
         # that contains *anyone* who's logged in through WIND
         affils.append("ALL_CU")
-        
+
+        # by default, WIND affils include a group named for
+        # the uni for each user. This is not usually desirable
+        # so we strip it out, but there's a setting that lets
+        # you turn it back on. 
+        from django.config import settings
+        remove_uni = True
+        if hasattr(settings,'WIND_AFFIL_GROUP_INCLUDE_UNI_GROUP'):
+            if settings.WIND_AFFIL_GROUP_INCLUDE_UNI_GROUP is True:
+                remove_uni = False
+
         for affil in affils:
+            if remove_uni and (affil == user.username):
+                continue
             try:
                 group = Group.objects.get(name=affil)
             except Group.DoesNotExist:
