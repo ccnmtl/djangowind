@@ -135,25 +135,37 @@ class AffilGroupMapper:
         user.save()
             
 
-class TLCXMLStaffMapper:
-    """ if the user is in tlcxml, it makes sure that the user
-        is set as 'staff' """
+class StaffMapper:
+    """ if the user is in one of the specified wind affil groups,
+        it makes sure that the user is set as 'staff' """
+
+    def __init__(self):
+        from django.config import settings
+        if not hasattr(settings,'WIND_STAFF_MAPPER_GROUPS'):
+            self.groups = []
+        self.groups = settings.WIND_STAFF_MAPPER_GROUPS
 
     def map(self,user,affils):
         for affil in affils:
-            if affil == 'tlcxml.cunix.local:columbia.edu':
+            if affil in self.groups:
                 user.is_staff = True
                 user.save()
                 return
 
 
-class TLCXMLSuperuserMapper:
-    """ if the user is in tlcxml, it makes sure that the user
-        is set as 'superuser' """
+class SuperuserMapper:
+    """ if the user is in one of the specified wind affil groups,
+        it makes sure that the user is set as 'superuser' """
+
+    def __init__(self):
+        from django.config import settings
+        if not hasattr(settings,'WIND_SUPERUSER_MAPPER_GROUPS'):
+            self.groups = []
+        self.groups = settings.WIND_SUPERUSER_MAPPER_GROUPS
 
     def map(self,user,affils):
         for affil in affils:
-            if affil == 'tlcxml.cunix.local:columbia.edu':
+            if affil in self.groups:
                 user.is_superuser = True
                 user.save()
                 return
