@@ -30,7 +30,7 @@ setup(
     version="0.7",
     author="Anders Pearson",
     author_email="anders@columbia.edu",
-    url="",
+    url="http://wiki.ccnmtl.columbia.edu/index.php/Django_Wind",
     description="Django Authentication backend for CU WIND",
     long_description="Django Authentication backend for CU WIND and associated helpers",
     install_requires = ["httplib2","restclient"],
