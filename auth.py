@@ -49,7 +49,7 @@ class WindAuthBackend:
             # i don't know how to actually get this error message
             # to bubble back up to the user. must dig into
             # django auth deeper. 
-            print username # WIND error message
+            pass
         return None
 
     def get_user(self, user_id):
