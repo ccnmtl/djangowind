@@ -38,7 +38,8 @@ setup(
     license = "BSD",
     platforms = ["any"],
     zip_safe=False,
-    packages=find_packages(),
+    package_data = {'' : ['*.*']},
+    packages=['djangowind'],
     test_suite='nose.collector',
     )
     
