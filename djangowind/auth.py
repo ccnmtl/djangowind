@@ -74,7 +74,6 @@ class WindAuthBackend:
         return cls()
 
     def get_mappers(self):
-        from django.conf import settings
         mappers = []
         if not hasattr(settings,'WIND_AFFIL_HANDLERS'):
             return []
@@ -83,7 +82,6 @@ class WindAuthBackend:
         return mappers
 
     def get_profile_handlers(self):
-        from django.conf import settings
         handlers = []
         if not hasattr(settings,'WIND_PROFILE_HANDLERS'):
             return []
@@ -125,7 +123,6 @@ class AffilGroupMapper:
         # the uni for each user. This is not usually desirable
         # so we strip it out, but there's a setting that lets
         # you turn it back on. 
-        from django.config import settings
         remove_uni = True
         if hasattr(settings,'WIND_AFFIL_GROUP_INCLUDE_UNI_GROUP'):
             if settings.WIND_AFFIL_GROUP_INCLUDE_UNI_GROUP is True:
@@ -148,7 +145,6 @@ class StaffMapper:
         it makes sure that the user is set as 'staff' """
 
     def __init__(self):
-        from django.config import settings
         if not hasattr(settings,'WIND_STAFF_MAPPER_GROUPS'):
             self.groups = []
         self.groups = settings.WIND_STAFF_MAPPER_GROUPS
@@ -166,7 +162,6 @@ class SuperuserMapper:
         it makes sure that the user is set as 'superuser' """
 
     def __init__(self):
-        from django.config import settings
         if not hasattr(settings,'WIND_SUPERUSER_MAPPER_GROUPS'):
             self.groups = []
         self.groups = settings.WIND_SUPERUSER_MAPPER_GROUPS
