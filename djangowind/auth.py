@@ -170,6 +170,7 @@ class SuperuserMapper:
         for affil in affils:
             if affil in self.groups:
                 user.is_superuser = True
+                user.is_staff = True
                 user.save()
                 return
 
