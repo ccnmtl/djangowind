@@ -83,7 +83,10 @@ def windlogin(request, redirect_field_name=REDIRECT_FIELD_NAME):
             redirect_to = settings.LOGIN_REDIRECT_URL
         from django.contrib.auth import login
         login(request, u)
-        request.session.delete_test_cookie()
+        try:
+            request.session.delete_test_cookie()
+        except KeyError:
+            pass # sometimes this just fails
         return HttpResponseRedirect(redirect_to)        
     else:
         return HttpResponse("could not login through WIND")
