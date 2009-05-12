@@ -41,7 +41,7 @@ def login(request, template_name='registration/login.html', redirect_field_name=
         form = AuthenticationForm(data=request.POST)
         if form.is_valid():
             # Light security check -- make sure redirect_to isn't garbage.
-            if not redirect_to or '//' in redirect_to or ' ' in redirect_to:
+            if not redirect_to:
                 redirect_to = settings.LOGIN_REDIRECT_URL
             from django.contrib.auth import login
             login(request, form.get_user())
@@ -78,7 +78,7 @@ def windlogin(request, redirect_field_name=REDIRECT_FIELD_NAME):
     if u is not None:
         redirect_to = request.REQUEST.get(redirect_field_name, '')
         # Light security check -- make sure redirect_to isn't garbage.
-        if not redirect_to or '//' in redirect_to or ' ' in redirect_to:
+        if not redirect_to:
             from django.conf import settings
             redirect_to = settings.LOGIN_REDIRECT_URL
         from django.contrib.auth import login
