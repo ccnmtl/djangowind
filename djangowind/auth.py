@@ -38,9 +38,10 @@ class WindAuthBackend:
             except User.DoesNotExist:
                 user = User(username=username, password='wind user')
                 user.set_unusable_password()
-                for handler in self.get_profile_handlers():
-                    handler.process(user)
                 user.save()
+
+            for handler in self.get_profile_handlers():
+                handler.process(user)
 
             for handler in self.get_mappers():
                 handler.map(user,groups)
@@ -95,19 +96,21 @@ class CDAPProfileHandler:
         from restclient import GET
         import httplib2
         import simplejson
-        user.email = user.username + "@columbia.edu"
-        cdap_base = "http://cdap.ccnmtl.columbia.edu/"
-        if hasattr(settings,'CDAP_BASE'):
-            cdap_base = settings.CDAP_BASE
-        try:
-            r = simplejson.loads(GET(cdap_base + "?uni=%s" % user.username))
-            if r.get('found',False):
-                user.last_name = r.get('lastname',r.get('sn',''))
-                user.first_name = r.get('firstname',r.get('givenName',''))
-        except httplib2.ServerNotFoundError:
-            # cdap.ccnmtl.columbia.edu (or whatever the CDAP server is set to)
-            # is probably not in /etc/hosts on this server
-            pass
+        if not user.email:
+            user.email = user.username + "@columbia.edu"
+        if not user.last_name or not user.first_name:
+            cdap_base = "http://cdap.ccnmtl.columbia.edu/"
+            if hasattr(settings,'CDAP_BASE'):
+                cdap_base = settings.CDAP_BASE
+            try:
+                r = simplejson.loads(GET(cdap_base + "?uni=%s" % user.username))
+                if r.get('found',False):
+                    user.last_name = r.get('lastname',r.get('sn',''))
+                    user.first_name = r.get('firstname',r.get('givenName',''))
+            except httplib2.ServerNotFoundError:
+                # cdap.ccnmtl.columbia.edu (or whatever the CDAP server is set to)
+                # is probably not in /etc/hosts on this server
+                pass
         user.save()
 
 class AffilGroupMapper:
