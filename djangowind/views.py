@@ -1,5 +1,5 @@
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse,HttpResponseRedirect
+from django.http import HttpResponse,HttpResponseRedirect,HttpResponseForbidden
 from django.shortcuts import get_object_or_404, render_to_response
 
 from django.contrib.auth import authenticate, login
@@ -74,8 +74,9 @@ login = never_cache(login)
 
 def windlogin(request, redirect_field_name=REDIRECT_FIELD_NAME):
     """ validates the WIND ticket and logs the user in """
-    u = authenticate(ticket=request.GET['ticketid'])
-    if u is not None:
+    if request.GET.has_key('ticketid'):
+      u = authenticate(ticket=request.GET['ticketid'])
+      if u is not None:
         redirect_to = request.REQUEST.get(redirect_field_name, '')
         # Light security check -- make sure redirect_to isn't garbage.
         if not redirect_to:
@@ -88,6 +89,7 @@ def windlogin(request, redirect_field_name=REDIRECT_FIELD_NAME):
         except KeyError:
             pass # sometimes this just fails
         return HttpResponseRedirect(redirect_to)        
-    else:
-        return HttpResponse("could not login through WIND")
+
+    #else:
+    return HttpResponseForbidden("could not login through WIND")
 

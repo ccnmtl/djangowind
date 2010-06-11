@@ -27,7 +27,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="djangowind",
-    version="0.9.6",
+    version="0.9.7",
     author="Anders Pearson",
     author_email="anders@columbia.edu",
     url="http://wiki.ccnmtl.columbia.edu/index.php/Django_Wind",
