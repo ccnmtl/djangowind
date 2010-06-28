@@ -2,7 +2,8 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse,HttpResponseRedirect,HttpResponseForbidden
 from django.shortcuts import get_object_or_404, render_to_response
 
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.views import logout as auth_logout_view
 from auth import WindAuthBackend
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -33,6 +34,8 @@ from django.views.decorators.cache import never_cache
 # copied from django.contrib.auth.views
 # and extended with WIND settings so they can be specified
 # in the settings.py instead of hard-coded into templates
+
+SESSION_KEY = 'edu.columbia.wind'
 
 def login(request, template_name='registration/login.html', redirect_field_name=REDIRECT_FIELD_NAME):
     "Displays the login form and handles the login action."
@@ -72,6 +75,16 @@ def login(request, template_name='registration/login.html', redirect_field_name=
 login = never_cache(login)
 
 
+def logout(request, next_page=None, template_name='registration/logged_out.html', redirect_field_name=REDIRECT_FIELD_NAME):
+    was_wind_login = request.session.has_key(SESSION_KEY)
+    from django.contrib.auth import logout
+    logout(request)
+    if was_wind_login:
+        return HttpResponseRedirect('%slogout' % settings.WIND_BASE)    
+    else:
+        return auth_logout_view(request, next_page, template_name, redirect_field_name)
+
+
 def windlogin(request, redirect_field_name=REDIRECT_FIELD_NAME):
     """ validates the WIND ticket and logs the user in """
     if request.GET.has_key('ticketid'):
@@ -86,6 +99,7 @@ def windlogin(request, redirect_field_name=REDIRECT_FIELD_NAME):
         login(request, u)
         try:
             request.session.delete_test_cookie()
+            request.session[SESSION_KEY] = True
         except KeyError:
             pass # sometimes this just fails
         return HttpResponseRedirect(redirect_to)        

@@ -3,7 +3,7 @@ from django.conf.urls.defaults import *
 urlpatterns = patterns('',
                        (r'^login/$', 'djangowind.views.login'),
                        (r'^windlogin/$','djangowind.views.windlogin'),
-                       (r'^logout/$','django.contrib.auth.views.logout'),
+                       (r'^logout/$','djangowind.views.logout'),
                        (r'^logout_then_login/$','django.contrib.auth.views.logout_then_login'),
                        (r'^redirect_to_login/$','django.contrib.auth.views.redirect_to_login'),
                        (r'^password_reset/$','django.contrib.auth.views.password_reset'),
