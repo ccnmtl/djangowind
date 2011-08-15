@@ -27,13 +27,13 @@ from setuptools import setup, find_packages
 
 setup(
     name="djangowind",
-    version="0.9.8",
+    version="0.10.0",
     author="Anders Pearson",
     author_email="anders@columbia.edu",
     url="http://wiki.ccnmtl.columbia.edu/index.php/Django_Wind",
     description="Django Authentication backend for CU WIND",
     long_description="Django Authentication backend for CU WIND and associated helpers",
-    install_requires = ["httplib2","restclient"],
+    install_requires = [],
     scripts = [],
     license = "BSD",
     platforms = ["any"],

@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.auth.models import User, Group, check_password
 import urllib
 from django.core.exceptions import ImproperlyConfigured
+import ldap
 
 def validate_wind_ticket(ticketid):
     """
@@ -90,27 +91,56 @@ class WindAuthBackend:
             handlers.append(self.load_handler(handler_path))
         return handlers    
 
+def ldap_lookup(uni=""):
+    firstname = ""
+    lastname = ""
+    LDAP_SERVER = "ldap.columbia.edu"
+    BASE_DN = "o=Columbia University, c=us"
+    if hasattr(settings,'LDAP_SERVER'):
+        LDAP_SERVER = settings.LDAP_SERVER
+    if hasattr(settings,'BASE_DN'):
+        BASE_DN = settings.BASE_DN
+    l = ldap.open(LDAP_SERVER)
+    baseDN = BASE_DN
+    searchScope = ldap.SCOPE_SUBTREE
+    retrieveAttributes = None
+    searchFilter = "uni=%s" % uni
+    ldap_result_id = l.search(baseDN, searchScope, searchFilter, retrieveAttributes)
+    results_dict = {'found' : False, 'lastname' : '', 'firstname' : ''}
+    while 1:
+        result_type, result_data = l.result(ldap_result_id, 0)
+        if result_data == []:
+            break
+        else:
+            if result_type == ldap.RES_SEARCH_ENTRY:
+                results_dict['found'] = True
+                values = result_data[0][1]
+                for k, v in values.items():
+                    results_dict[k] = ", ".join(v)
+                    if k == 'sn':
+                        results_dict['lastname'] = v[0]
+                    if k == 'givenname':
+                        results_dict['firstname'] = v[0]
+                    if k == 'givenName':
+                        results_dict['firstname'] = v[0]
+                    if k == 'telephoneNumber':
+                        results_dict['telephonenumber'] = v[0]
+
+    if results_dict['lastname'] == "":
+        results_dict['lastname'] = uni
+    return results_dict
+
+
 class CDAPProfileHandler:
     """ fills in email, last_name, first_name from CDAP """
     def process(self,user):
-        from restclient import GET
-        import httplib2
-        import simplejson
         if not user.email:
             user.email = user.username + "@columbia.edu"
         if not user.last_name or not user.first_name:
-            cdap_base = "http://cdap.ccnmtl.columbia.edu/"
-            if hasattr(settings,'CDAP_BASE'):
-                cdap_base = settings.CDAP_BASE
-            try:
-                r = simplejson.loads(GET(cdap_base + "?uni=%s" % user.username))
-                if r.get('found',False):
-                    user.last_name = r.get('lastname',r.get('sn',''))
-                    user.first_name = r.get('firstname',r.get('givenName',''))
-            except httplib2.ServerNotFoundError:
-                # cdap.ccnmtl.columbia.edu (or whatever the CDAP server is set to)
-                # is probably not in /etc/hosts on this server
-                pass
+            r = ldap_lookup(user.username)
+            if r.get('found',False):
+                user.last_name = r.get('lastname',r.get('sn',''))
+                user.first_name = r.get('firstname',r.get('givenName',''))
         user.save()
 
 class AffilGroupMapper:
