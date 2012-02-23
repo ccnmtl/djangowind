@@ -2,7 +2,6 @@ from django.conf import settings
 from django.contrib.auth.models import User, Group, check_password
 import urllib
 from django.core.exceptions import ImproperlyConfigured
-import ldap
 
 def validate_wind_ticket(ticketid):
     """
@@ -92,6 +91,8 @@ class WindAuthBackend:
         return handlers    
 
 def ldap_lookup(uni=""):
+    import ldap
+
     firstname = ""
     lastname = ""
     LDAP_SERVER = "ldap.columbia.edu"
