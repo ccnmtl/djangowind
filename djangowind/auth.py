@@ -28,6 +28,8 @@ def validate_wind_ticket(ticketid):
         return (False,"WIND did not return a valid response.",[])
 
 class WindAuthBackend:
+    supports_inactive_user = True
+
     def authenticate(self, ticket=None):
         if ticket is None:
             return None
