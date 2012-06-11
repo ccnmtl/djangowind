@@ -1,33 +1,18 @@
-from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse,HttpResponseRedirect,HttpResponseForbidden
-from django.shortcuts import get_object_or_404, render_to_response
+from django.http import HttpResponseRedirect, HttpResponseForbidden
+from django.shortcuts import render_to_response
 
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate
+from django.contrib.auth import login as django_login
+from django.contrib.auth import logout as django_logout
 from django.contrib.auth.views import logout as auth_logout_view
-from auth import WindAuthBackend
 from django.conf import settings
 from django.contrib.sites.models import Site
 
 from django.contrib.auth.forms import AuthenticationForm
-from django import forms
-from django.shortcuts import render_to_response
 from django.template import RequestContext
-from django.contrib.sites.models import Site, RequestSite
-from django.http import HttpResponseRedirect
-from django.contrib.auth.decorators import login_required
+from django.contrib.sites.models import RequestSite
 from django.contrib.auth import REDIRECT_FIELD_NAME
-from django.utils.translation import ugettext as _
 
-from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm, PasswordChangeForm
-from django.contrib.auth.tokens import default_token_generator
-from django.core.urlresolvers import reverse
-from django.shortcuts import render_to_response, get_object_or_404
-from django.contrib.sites.models import Site, RequestSite
-from django.http import HttpResponseRedirect, Http404
-from django.template import RequestContext
-from django.utils.http import urlquote, base36_to_int
-from django.utils.translation import ugettext as _
-from django.contrib.auth.models import User
 from django.views.decorators.cache import never_cache
 
 
@@ -37,7 +22,9 @@ from django.views.decorators.cache import never_cache
 
 SESSION_KEY = 'edu.columbia.wind'
 
-def login(request, template_name='registration/login.html', redirect_field_name=REDIRECT_FIELD_NAME):
+
+def login(request, template_name='registration/login.html',
+          redirect_field_name=REDIRECT_FIELD_NAME):
     "Displays the login form and handles the login action."
     redirect_to = request.REQUEST.get(redirect_field_name, '')
     if request.method == "POST":
@@ -46,15 +33,14 @@ def login(request, template_name='registration/login.html', redirect_field_name=
             # Light security check -- make sure redirect_to isn't garbage.
             if not redirect_to:
                 redirect_to = settings.LOGIN_REDIRECT_URL
-            from django.contrib.auth import login
-            login(request, form.get_user())
+            django_login(request, form.get_user())
             if request.session.test_cookie_worked():
                 try:
                     request.session.delete_test_cookie()
                 except KeyError:
-                    pass # somehow this always works in the core django
-                         # but often breaks in here even though it's
-                         # just a copy/paste of the core django login code
+                    pass  # somehow this always works in the core django
+                          # but often breaks in here even though it's
+                          # just a copy/paste of the core django login code
             return HttpResponseRedirect(redirect_to)
     else:
         form = AuthenticationForm(request)
@@ -68,42 +54,41 @@ def login(request, template_name='registration/login.html', redirect_field_name=
         'form': form,
         redirect_field_name: redirect_to,
         'site_name': current_site.name,
-        'site' : current_site,
-        'wind_base' : settings.WIND_BASE,
-        'wind_service' : settings.WIND_SERVICE,
+        'site': current_site,
+        'wind_base': settings.WIND_BASE,
+        'wind_service': settings.WIND_SERVICE,
     }, context_instance=RequestContext(request))
 login = never_cache(login)
 
 
-def logout(request, next_page=None, template_name='registration/logged_out.html', redirect_field_name=REDIRECT_FIELD_NAME):
-    was_wind_login = request.session.has_key(SESSION_KEY)
-    from django.contrib.auth import logout
-    logout(request)
+def logout(request, next_page=None,
+           template_name='registration/logged_out.html',
+           redirect_field_name=REDIRECT_FIELD_NAME):
+    was_wind_login = SESSION_KEY in request.session
+    django_logout(request)
     if was_wind_login:
-        return HttpResponseRedirect('%slogout' % settings.WIND_BASE)    
+        return HttpResponseRedirect('%slogout' % settings.WIND_BASE)
     else:
-        return auth_logout_view(request, next_page, template_name, redirect_field_name)
+        return auth_logout_view(request, next_page, template_name,
+                                redirect_field_name)
 
 
 def windlogin(request, redirect_field_name=REDIRECT_FIELD_NAME):
     """ validates the WIND ticket and logs the user in """
-    if request.GET.has_key('ticketid'):
-      u = authenticate(ticket=request.GET['ticketid'])
-      if u is not None:
-        redirect_to = request.REQUEST.get(redirect_field_name, '')
-        # Light security check -- make sure redirect_to isn't garbage.
-        if not redirect_to:
-            from django.conf import settings
-            redirect_to = settings.LOGIN_REDIRECT_URL
-        from django.contrib.auth import login
-        login(request, u)
-        try:
-            request.session.delete_test_cookie()
-            request.session[SESSION_KEY] = True
-        except KeyError:
-            pass # sometimes this just fails
-        return HttpResponseRedirect(redirect_to)        
-
-    #else:
+    if 'ticketid' in request.GET:
+        u = authenticate(ticket=request.GET['ticketid'])
+        if u is not None:
+            redirect_to = request.REQUEST.get(redirect_field_name, '')
+            # Light security check -- make sure redirect_to isn't garbage.
+            if not redirect_to:
+                from django.conf import settings
+                redirect_to = settings.LOGIN_REDIRECT_URL
+            from django.contrib.auth import login
+            login(request, u)
+            try:
+                request.session.delete_test_cookie()
+                request.session[SESSION_KEY] = True
+            except KeyError:
+                pass  # sometimes this just fails
+            return HttpResponseRedirect(redirect_to)
     return HttpResponseForbidden("could not login through WIND")
-
