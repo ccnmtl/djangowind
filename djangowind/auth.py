@@ -108,7 +108,7 @@ def _handle_ldap_entry(result_data):
         ]
 
     found = True
-    r = dict
+    r = dict()
     values = result_data[0][1]
     for k, v in values.items():
         r[k] = ", ".join(v)
