@@ -105,7 +105,7 @@ def _handle_ldap_entry(result_data):
         ('givenname', 'firstname'),
         ('givenName', 'firstname'),
         ('telephoneNumber', 'telephonenumber'),
-        ]
+    ]
 
     found = True
     r = dict()
