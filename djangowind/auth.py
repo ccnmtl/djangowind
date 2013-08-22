@@ -30,7 +30,7 @@ def validate_wind_ticket(ticketid):
         return (False, "WIND did not return a valid response.", [])
 
 
-class WindAuthBackend:
+class WindAuthBackend(object):
     supports_inactive_user = True
 
     def authenticate(self, ticket=None):
@@ -105,7 +105,7 @@ def _handle_ldap_entry(result_data):
         ('givenname', 'firstname'),
         ('givenName', 'firstname'),
         ('telephoneNumber', 'telephonenumber'),
-        ]
+    ]
 
     found = True
     r = dict()
@@ -156,20 +156,32 @@ an equivalent""")
     return results_dict
 
 
-class CDAPProfileHandler:
+class CDAPProfileHandler(object):
     """ fills in email, last_name, first_name from CDAP """
     def process(self, user):
         if not user.email:
             user.email = user.username + "@columbia.edu"
         if not user.last_name or not user.first_name:
-            r = ldap_lookup(user.username)
-            if r.get('found', False):
-                user.last_name = r.get('lastname', r.get('sn', ''))
-                user.first_name = r.get('firstname', r.get('givenName', ''))
+            try:
+                r = ldap_lookup(user.username)
+                if r.get('found', False):
+                    user.last_name = r.get('lastname', r.get('sn', ''))
+                    user.first_name = r.get(
+                        'firstname',
+                        r.get('givenName', ''))
+            except ImportError:
+                pass
         user.save()
 
 
-class AffilGroupMapper:
+class DummyProfileHandler(object):
+    """ a profile handler to use for testing
+    (don't want to have to make ldap requests during unit tests)"""
+    def process(self, user):
+        pass
+
+
+class AffilGroupMapper(object):
     """ makes sure that the user is in a Group for every wind affil,
         autovivifying Groups if necessary """
 
@@ -199,14 +211,15 @@ class AffilGroupMapper:
         user.save()
 
 
-class StaffMapper:
+class StaffMapper(object):
     """ if the user is in one of the specified wind affil groups,
         it makes sure that the user is set as 'staff' """
 
     def __init__(self):
         if not hasattr(settings, 'WIND_STAFF_MAPPER_GROUPS'):
             self.groups = []
-        self.groups = settings.WIND_STAFF_MAPPER_GROUPS
+        else:
+            self.groups = settings.WIND_STAFF_MAPPER_GROUPS
 
     def map(self, user, affils):
         for affil in affils:
@@ -216,14 +229,15 @@ class StaffMapper:
                 return
 
 
-class SuperuserMapper:
+class SuperuserMapper(object):
     """ if the user is in one of the specified wind affil groups,
         it makes sure that the user is set as 'superuser' """
 
     def __init__(self):
         if not hasattr(settings, 'WIND_SUPERUSER_MAPPER_GROUPS'):
             self.groups = []
-        self.groups = settings.WIND_SUPERUSER_MAPPER_GROUPS
+        else:
+            self.groups = settings.WIND_SUPERUSER_MAPPER_GROUPS
 
     def map(self, user, affils):
         for affil in affils:
