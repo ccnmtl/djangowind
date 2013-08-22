@@ -169,6 +169,13 @@ class CDAPProfileHandler:
         user.save()
 
 
+class DummyProfileHandler:
+    """ a profile handler to use for testing
+    (don't want to have to make ldap requests during unit tests)"""
+    def process(self, user):
+        pass
+
+
 class AffilGroupMapper:
     """ makes sure that the user is in a Group for every wind affil,
         autovivifying Groups if necessary """
@@ -206,7 +213,8 @@ class StaffMapper:
     def __init__(self):
         if not hasattr(settings, 'WIND_STAFF_MAPPER_GROUPS'):
             self.groups = []
-        self.groups = settings.WIND_STAFF_MAPPER_GROUPS
+        else:
+            self.groups = settings.WIND_STAFF_MAPPER_GROUPS
 
     def map(self, user, affils):
         for affil in affils:
@@ -223,7 +231,8 @@ class SuperuserMapper:
     def __init__(self):
         if not hasattr(settings, 'WIND_SUPERUSER_MAPPER_GROUPS'):
             self.groups = []
-        self.groups = settings.WIND_SUPERUSER_MAPPER_GROUPS
+        else:
+            self.groups = settings.WIND_SUPERUSER_MAPPER_GROUPS
 
     def map(self, user, affils):
         for affil in affils:

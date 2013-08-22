@@ -1,7 +1,9 @@
 from django.test import TestCase
 from httpretty import HTTPretty, httprettified
 from djangowind.auth import validate_wind_ticket, WindAuthBackend
-from django.contrib.auth.models import User
+from djangowind.auth import AffilGroupMapper, StaffMapper, SuperuserMapper
+from djangowind.auth import _handle_ldap_entry
+from django.contrib.auth.models import User, Group
 
 
 class ValidateWindTicketTest(TestCase):
@@ -84,6 +86,13 @@ class WindAuthBackendTest(TestCase):
         self.assertEqual(r.username, "anders")
         self.assertEqual(r.password, "!")
 
+        with self.settings(
+                WIND_PROFILE_HANDLERS=['djangowind.auth.DummyProfileHandler']):
+            w = WindAuthBackend()
+            r = w.authenticate("foo")
+            self.assertEqual(r.username, "anders")
+            self.assertEqual(r.password, "!")
+
     @httprettified
     def test_authenticate_success_existing_user(self):
         HTTPretty.register_uri(
@@ -123,3 +132,72 @@ class WindAuthBackendTest(TestCase):
             r = w.authenticate("foo")
             self.assertEqual(r.username, "anders")
             self.assertEqual(r.password, "!")
+
+    def test_get_user(self):
+        w = WindAuthBackend()
+        # no pre-existing user
+        r = w.get_user(1)
+        self.assertEqual(r, None)
+        # now the other case
+        u = User.objects.create(username="test")
+        r = w.get_user(u.id)
+        self.assertEqual(r, u)
+
+
+class AffilGroupMapperTest(TestCase):
+    def test_map(self):
+        u = User.objects.create(username="testuser")
+        m = AffilGroupMapper()
+        m.map(u, ["testuser"])
+        self.assertEqual(Group.objects.filter(name="ALL_CU").count(), 1)
+        self.assertEqual(Group.objects.filter(name="testuser").count(), 0)
+        with self.settings(WIND_AFFIL_GROUP_INCLUDE_UNI_GROUP=True):
+            m.map(u, ["testuser"])
+            self.assertEqual(Group.objects.filter(name="ALL_CU").count(), 1)
+            self.assertEqual(Group.objects.filter(name="testuser").count(), 1)
+
+
+class StaffMapperTest(TestCase):
+    def test_map(self):
+        m = StaffMapper()
+        u = User.objects.create(username="testuser")
+        m.map(u, [])
+        self.assertFalse(u.is_staff)
+        m.map(u, ["testuser"])
+        self.assertFalse(u.is_staff)
+        with self.settings(WIND_STAFF_MAPPER_GROUPS=["testuser"]):
+            m = StaffMapper()
+            m.map(u, ["testuser"])
+            self.assertTrue(u.is_staff)
+
+
+class SuperuserMapperTest(TestCase):
+    def test_map(self):
+        m = SuperuserMapper()
+        u = User.objects.create(username="testuser")
+        m.map(u, [])
+        self.assertFalse(u.is_staff)
+        self.assertFalse(u.is_superuser)
+        m.map(u, ["testuser"])
+        self.assertFalse(u.is_staff)
+        self.assertFalse(u.is_superuser)
+        with self.settings(WIND_SUPERUSER_MAPPER_GROUPS=["testuser"]):
+            m = SuperuserMapper()
+            m.map(u, ["testuser"])
+            self.assertTrue(u.is_staff)
+            self.assertTrue(u.is_superuser)
+
+
+class HandleLdapEntryTest(TestCase):
+    def test_handle_ldap_entry_empty(self):
+        d = (('ignore', dict()),)
+        r = _handle_ldap_entry(d)
+        self.assertEqual(r[0], True)
+        self.assertEqual(r[1], dict())
+
+    def test_handle_ldap_entry(self):
+        d = (('ignore', dict(one=['a', 'b', 'c'], sn=['d', 'e', 'f'])),)
+        r = _handle_ldap_entry(d)
+        self.assertEqual(r[0], True)
+        self.assertEqual(
+            r[1], {'lastname': 'd', 'one': 'a, b, c', 'sn': 'd, e, f'})
