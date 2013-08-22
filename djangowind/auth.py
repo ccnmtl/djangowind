@@ -30,7 +30,7 @@ def validate_wind_ticket(ticketid):
         return (False, "WIND did not return a valid response.", [])
 
 
-class WindAuthBackend:
+class WindAuthBackend(object):
     supports_inactive_user = True
 
     def authenticate(self, ticket=None):
@@ -156,7 +156,7 @@ an equivalent""")
     return results_dict
 
 
-class CDAPProfileHandler:
+class CDAPProfileHandler(object):
     """ fills in email, last_name, first_name from CDAP """
     def process(self, user):
         if not user.email:
@@ -169,14 +169,14 @@ class CDAPProfileHandler:
         user.save()
 
 
-class DummyProfileHandler:
+class DummyProfileHandler(object):
     """ a profile handler to use for testing
     (don't want to have to make ldap requests during unit tests)"""
     def process(self, user):
         pass
 
 
-class AffilGroupMapper:
+class AffilGroupMapper(object):
     """ makes sure that the user is in a Group for every wind affil,
         autovivifying Groups if necessary """
 
@@ -206,7 +206,7 @@ class AffilGroupMapper:
         user.save()
 
 
-class StaffMapper:
+class StaffMapper(object):
     """ if the user is in one of the specified wind affil groups,
         it makes sure that the user is set as 'staff' """
 
@@ -224,7 +224,7 @@ class StaffMapper:
                 return
 
 
-class SuperuserMapper:
+class SuperuserMapper(object):
     """ if the user is in one of the specified wind affil groups,
         it makes sure that the user is set as 'superuser' """
 
