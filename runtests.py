@@ -1,4 +1,4 @@
-""" run tests for pagetree
+""" run tests for djangowind
 
 $ virtualenv ve
 $ ./ve/bin/pip install -r test_reqs.txt
@@ -20,17 +20,28 @@ def main():
             'django.contrib.sessions',
             'djangowind',
             'django_nose',
+            'django_jenkins',
         ),
-        TEST_RUNNER = 'django_nose.NoseTestSuiteRunner',
+        JENKINS_TEST_RUNNER = 'django_jenkins.runner.CITestSuiteRunner',
 
         NOSE_ARGS = [
             '--with-coverage',
             '--cover-package=djangowind',
-            ],
-
+        ],
+        TEST_PROJECT_APPS = (
+            'djangowind',
+        ),
+        COVERAGE_EXCLUDES_FOLDERS = ['migrations'],
         ROOT_URLCONF = [],
         SOUTH_TESTS_MIGRATE=False,
 
+        JENKINS_TASKS = (
+            'django_jenkins.tasks.with_coverage',
+            'django_jenkins.tasks.django_tests',
+        ),
+        PROJECT_APPS = [
+            'djangowind',
+        ],
         # Django replaces this, but it still wants it. *shrugs*
         DATABASES = {
             'default': {
@@ -40,12 +51,12 @@ def main():
                 'PORT': '',
                 'USER': '',
                 'PASSWORD': '',
-                }
             }
+        },
     )
 
     # Fire off the tests
-    call_command('test', 'djangowind')
+    call_command('jenkins')
 
 if __name__ == '__main__':
     main()
