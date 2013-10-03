@@ -82,7 +82,7 @@ def logout(request, next_page=None,
 def windlogin(request, redirect_field_name=REDIRECT_FIELD_NAME):
     """ validates the WIND ticket and logs the user in """
     if 'ticketid' in request.GET:
-        statsd.incr('djangowind.windlogin')
+        statsd.incr('djangowind.windlogin.called')
         u = authenticate(ticket=request.GET['ticketid'])
         if u is not None:
             redirect_to = request.REQUEST.get(redirect_field_name, '')
@@ -92,6 +92,7 @@ def windlogin(request, redirect_field_name=REDIRECT_FIELD_NAME):
                 redirect_to = settings.LOGIN_REDIRECT_URL
             from django.contrib.auth import login
             login(request, u)
+            statsd.incr('djangowind.windlogin.success')
             try:
                 request.session.delete_test_cookie()
                 request.session[SESSION_KEY] = True
