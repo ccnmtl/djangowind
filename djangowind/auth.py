@@ -12,7 +12,7 @@ def validate_wind_ticket(ticketid):
     if successful, it returns (True,username)
     otherwise it returns (False,error message)
     """
-    statsd.incr('djangowind.validate_wind_ticket')
+    statsd.incr('djangowind.validate_wind_ticket.called')
     if ticketid == "":
         return (False, 'no ticketid', '')
     wind_base = "https://wind.columbia.edu/"
@@ -38,7 +38,7 @@ class WindAuthBackend(object):
     supports_inactive_user = True
 
     def authenticate(self, ticket=None):
-        statsd.incr('djangowind.windauthbackend.authenticate')
+        statsd.incr('djangowind.windauthbackend.authenticate.called')
         if ticket is None:
             return None
         (response, username, groups) = validate_wind_ticket(ticket)
@@ -168,7 +168,7 @@ an equivalent""")
 class CDAPProfileHandler(object):
     """ fills in email, last_name, first_name from CDAP """
     def process(self, user):
-        statsd.incr('djangowind.cdap')
+        statsd.incr('djangowind.cdap.called')
         if not user.email:
             user.email = user.username + "@columbia.edu"
         if not user.last_name or not user.first_name:
@@ -199,7 +199,7 @@ class AffilGroupMapper(object):
         autovivifying Groups if necessary """
 
     def map(self, user, affils):
-        statsd.incr('djangowind.affilgroupmapper.map')
+        statsd.incr('djangowind.affilgroupmapper.map.called')
         # we also make a "pseudo" affil group ALL_CU
         # that contains *anyone* who's logged in through WIND
         affils.append("ALL_CU")
@@ -237,7 +237,7 @@ class StaffMapper(object):
             self.groups = settings.WIND_STAFF_MAPPER_GROUPS
 
     def map(self, user, affils):
-        statsd.incr('djangowind.staffmapper.map')
+        statsd.incr('djangowind.staffmapper.map.called')
         for affil in affils:
             if affil in self.groups:
                 statsd.incr('djangowind.staffmapper.map.is_staff')
@@ -257,7 +257,7 @@ class SuperuserMapper(object):
             self.groups = settings.WIND_SUPERUSER_MAPPER_GROUPS
 
     def map(self, user, affils):
-        statsd.incr('djangowind.superusermapper.map')
+        statsd.incr('djangowind.superusermapper.map.called')
         for affil in affils:
             if affil in self.groups:
                 statsd.incr('djangowind.superusermapper.map.is_superuser')

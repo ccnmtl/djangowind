@@ -28,9 +28,10 @@ def login(request, template_name='registration/login.html',
     "Displays the login form and handles the login action."
     redirect_to = request.REQUEST.get(redirect_field_name, '')
     if request.method == "POST":
+        statsd.incr('djangowind.login.called')
         form = AuthenticationForm(data=request.POST)
         if form.is_valid():
-            statsd.incr('djangowind.login')
+            statsd.incr('djangowind.login.valid_form')
             # Light security check -- make sure redirect_to isn't garbage.
             if not redirect_to:
                 redirect_to = settings.LOGIN_REDIRECT_URL
@@ -44,6 +45,8 @@ def login(request, template_name='registration/login.html',
                           # just a copy/paste of the core django login code
             statsd.incr('djangowind.login_succeeded')
             return HttpResponseRedirect(redirect_to)
+        else:
+            statsd.incr('djangowind.login.invalid_form')
     else:
         form = AuthenticationForm(request)
     request.session.set_test_cookie()
