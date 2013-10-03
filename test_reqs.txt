@@ -7,3 +7,5 @@ httpretty==0.6.3
 django-jenkins==0.14.1
 pep8==1.4.6
 pyflakes==0.7.3
+statsd==0.5.1
+django-statsd-mozilla==0.3.8.7

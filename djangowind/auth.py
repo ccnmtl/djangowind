@@ -3,6 +3,7 @@ from django.contrib.auth.models import User, Group
 import urllib
 from django.core.exceptions import ImproperlyConfigured
 from warnings import warn
+from django_statsd.clients import statsd
 
 
 def validate_wind_ticket(ticketid):
@@ -11,7 +12,7 @@ def validate_wind_ticket(ticketid):
     if successful, it returns (True,username)
     otherwise it returns (False,error message)
     """
-
+    statsd.incr('djangowind.validate_wind_ticket')
     if ticketid == "":
         return (False, 'no ticketid', '')
     wind_base = "https://wind.columbia.edu/"
@@ -21,12 +22,15 @@ def validate_wind_ticket(ticketid):
     response = urllib.urlopen(uri).read()
     lines = response.split("\n")
     if lines[0] == "yes":
+        statsd.incr('djangowind.validate_wind_ticket.success')
         username = lines[1]
         groups = [line for line in lines[1:] if line != ""]
         return (True, username, groups)
     elif lines[0] == "no":
+        statsd.incr('djangowind.validate_wind_ticket.fail')
         return (False, "The ticket was already used or was invalid.", [])
     else:
+        statsd.incr('djangowind.validate_wind_ticket.invalid')
         return (False, "WIND did not return a valid response.", [])
 
 
@@ -34,6 +38,7 @@ class WindAuthBackend(object):
     supports_inactive_user = True
 
     def authenticate(self, ticket=None):
+        statsd.incr('djangowind.windauthbackend.authenticate')
         if ticket is None:
             return None
         (response, username, groups) = validate_wind_ticket(ticket)
@@ -41,6 +46,7 @@ class WindAuthBackend(object):
             try:
                 user = User.objects.get(username=username)
             except User.DoesNotExist:
+                statsd.incr('djangowind.windauthbackend.create_user')
                 user = User(username=username, password='wind user')
                 user.set_unusable_password()
                 user.save()
@@ -55,6 +61,7 @@ class WindAuthBackend(object):
             # i don't know how to actually get this error message
             # to bubble back up to the user. must dig into
             # django auth deeper.
+            statsd.incr('djangowind.windauthbackend.failure')
             pass
         return None
 
@@ -119,9 +126,11 @@ def _handle_ldap_entry(result_data):
 
 
 def ldap_lookup(uni=""):
+    statsd.incr('djangowind.ldap_lookup')
     try:
         import ldap
     except ImportError:
+        statsd.incr('djangowind.ldap_lookup.import_failed')
         warn("""this requires the python ldap library.
 you probably need to install 'python-ldap' (on linux) or
 an equivalent""")
@@ -159,16 +168,20 @@ an equivalent""")
 class CDAPProfileHandler(object):
     """ fills in email, last_name, first_name from CDAP """
     def process(self, user):
+        statsd.incr('djangowind.cdap')
         if not user.email:
             user.email = user.username + "@columbia.edu"
         if not user.last_name or not user.first_name:
             try:
                 r = ldap_lookup(user.username)
                 if r.get('found', False):
+                    statsd.incr('djangowind.cdap.found')
                     user.last_name = r.get('lastname', r.get('sn', ''))
                     user.first_name = r.get(
                         'firstname',
                         r.get('givenName', ''))
+                else:
+                    statsd.incr('djangowind.cdap.not_found')
             except ImportError:
                 pass
         user.save()
@@ -186,6 +199,7 @@ class AffilGroupMapper(object):
         autovivifying Groups if necessary """
 
     def map(self, user, affils):
+        statsd.incr('djangowind.affilgroupmapper.map')
         # we also make a "pseudo" affil group ALL_CU
         # that contains *anyone* who's logged in through WIND
         affils.append("ALL_CU")
@@ -205,6 +219,7 @@ class AffilGroupMapper(object):
             try:
                 group = Group.objects.get(name=affil)
             except Group.DoesNotExist:
+                statsd.incr('djangowind.affilgroupmapper.create_group')
                 group = Group(name=affil)
                 group.save()
             user.groups.add(group)
@@ -222,8 +237,10 @@ class StaffMapper(object):
             self.groups = settings.WIND_STAFF_MAPPER_GROUPS
 
     def map(self, user, affils):
+        statsd.incr('djangowind.staffmapper.map')
         for affil in affils:
             if affil in self.groups:
+                statsd.incr('djangowind.staffmapper.map.is_staff')
                 user.is_staff = True
                 user.save()
                 return
@@ -240,8 +257,10 @@ class SuperuserMapper(object):
             self.groups = settings.WIND_SUPERUSER_MAPPER_GROUPS
 
     def map(self, user, affils):
+        statsd.incr('djangowind.superusermapper.map')
         for affil in affils:
             if affil in self.groups:
+                statsd.incr('djangowind.superusermapper.map.is_superuser')
                 user.is_superuser = True
                 user.is_staff = True
                 user.save()

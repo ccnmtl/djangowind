@@ -14,7 +14,7 @@ from django.contrib.sites.models import RequestSite
 from django.contrib.auth import REDIRECT_FIELD_NAME
 
 from django.views.decorators.cache import never_cache
-
+from django_statsd.clients import statsd
 
 # copied from django.contrib.auth.views
 # and extended with WIND settings so they can be specified
@@ -30,6 +30,7 @@ def login(request, template_name='registration/login.html',
     if request.method == "POST":
         form = AuthenticationForm(data=request.POST)
         if form.is_valid():
+            statsd.incr('djangowind.login')
             # Light security check -- make sure redirect_to isn't garbage.
             if not redirect_to:
                 redirect_to = settings.LOGIN_REDIRECT_URL
@@ -41,6 +42,7 @@ def login(request, template_name='registration/login.html',
                     pass  # somehow this always works in the core django
                           # but often breaks in here even though it's
                           # just a copy/paste of the core django login code
+            statsd.incr('djangowind.login_succeeded')
             return HttpResponseRedirect(redirect_to)
     else:
         form = AuthenticationForm(request)
@@ -66,6 +68,7 @@ def logout(request, next_page=None,
            redirect_field_name=REDIRECT_FIELD_NAME):
     was_wind_login = SESSION_KEY in request.session
     django_logout(request)
+    statsd.incr('djangowind.logout')
     if was_wind_login:
         return HttpResponseRedirect('%slogout' % settings.WIND_BASE)
     else:
@@ -76,6 +79,7 @@ def logout(request, next_page=None,
 def windlogin(request, redirect_field_name=REDIRECT_FIELD_NAME):
     """ validates the WIND ticket and logs the user in """
     if 'ticketid' in request.GET:
+        statsd.incr('djangowind.windlogin')
         u = authenticate(ticket=request.GET['ticketid'])
         if u is not None:
             redirect_to = request.REQUEST.get(redirect_field_name, '')
@@ -91,4 +95,8 @@ def windlogin(request, redirect_field_name=REDIRECT_FIELD_NAME):
             except KeyError:
                 pass  # sometimes this just fails
             return HttpResponseRedirect(redirect_to)
+        else:
+            statsd.incr('djangowind.windlogin.auth_failure')
+    else:
+        statsd.incr('djangowind.windlogin.no_ticketid')
     return HttpResponseForbidden("could not login through WIND")
