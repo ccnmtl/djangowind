@@ -10,7 +10,8 @@ In your django app, you'll need to do a few things to enable it.
 
 First, add `'djangowind'` to `INSTALLED_APPS`. Then add 
 
-    AUTHENTICATION_BACKENDS = ('djangowind.auth.WindAuthBackend','django.contrib.auth.backends.ModelBackend',)
+    AUTHENTICATION_BACKENDS = ('djangowind.auth.WindAuthBackend',
+                               'django.contrib.auth.backends.ModelBackend',)
     WIND_BASE = "https://wind.columbia.edu/"
     WIND_SERVICE = "cnmtl_full_np"
 
@@ -38,7 +39,7 @@ Now, in `urls.py`, add the mapping:
 
     ('^accounts/', include('djangowind.urls')),
 
-to your urlpatterns. This will keep all the auth stuff under
+to your `urlpatterns`. This will keep all the auth stuff under
 `/accounts/` the same as the standard django auth. You can, of course,
 override that behavior by using different mappings (but be careful to
 also change the relevant templates if you change that).
@@ -84,7 +85,7 @@ Sites table for your site.
 At this point, everything should basically work the same as with
 regular Django Auth (with obvious exceptions of password related
 things) and you can refer to the
-[http://docs.djangoproject.com/en/dev/topics/auth/ documentation]. Ie,
+[documentation](http://docs.djangoproject.com/en/dev/topics/auth/). Ie,
 you can use a `@login_required` decorator on a view and the user will
 have to go through that login screen and login via WIND to access the
 resource.
@@ -110,14 +111,14 @@ interface.
 
 The configuration above is very minimal. When the user logs in through
 WIND, it checks their ticket and, if valid, logs in the user. If there
-isn't an auth_user entry for that UNI, it will create one
+isn't an `auth_user` entry for that UNI, it will create one
 automatically and set it's password to django's "not a valid password"
-special value. first_name, last_name, etc will all be left blank and
+special value. `first_name`, `last_name`, etc will all be left blank and
 wind affils will be ignored. Most of this is changeable though.
 
 djangowind includes two different hooks for helpers (and includes a
 couple basic helpers). There are profile handlers which are expected
-to take care of filling in last_name, first_name, and email fields
+to take care of filling in `last_name`, `first_name`, and `email` fields
 when the user is first created and Affil Handlers which get to look at
 the WIND affils and take action based on them.
 
@@ -125,24 +126,23 @@ the WIND affils and take action based on them.
 
 djangowind includes a CDAP based profile handler that will fill in
 last_name, first_name, and email fields on the user object by talking
-to our CDAP service. To use it, add the following to your app's
+to our LDAP service. To use it, add the following to your app's
 settings.py:
 
     WIND_PROFILE_HANDLERS = ['djangowind.auth.CDAPProfileHandler']
 
-CDAPProfileHandler requires restclient to be installed and
-'cdap.ccnmtl.columbia.edu' to be properly set up in your
-/etc/hosts. If we ever run the CDAP server at a different URL, you can
-change the host by setting CDAP_BASE.
+The `CDAPProfilHandler` requires that you have the `python-ldap`
+library installed in your environment (this sometimes requires system
+packages above and beyond the Python).
 
-If you want to write your own ProfileHandler, it's just a class with a
-process(self,user) method on it. It will be passed the user object
+If you want to write your own `ProfileHandler`, it's just a class with a
+`process(self, user)` method on it. It will be passed the user object
 which probably only has the username field set and will be expected to
 set the other fields on the user and call .save() on it. It doesn't
-need to return anything. They just put it somewhere in your PYTHONPATH
-and add it to (or replace the CDAPProfileHandler)
-WIND_PROFILE_HANDLERS. If there is more than one handler in
-WIND_PROFILE_HANDLERS, djangowind will go through them all in order
+need to return anything. They just put it somewhere in your `PYTHONPATH`
+and add it to (or replace the `CDAPProfileHandler`)
+`WIND_PROFILE_HANDLERS`. If there is more than one handler in
+`WIND_PROFILE_HANDLERS`, djangowind will go through them all in order
 and give each a chance to process the user object. So keep that in
 mind if you're chaining them.
 
@@ -157,7 +157,7 @@ Eg, a trivial Profile Handler that gives everyone slack would look like:
 
 And remember that the Profile Handlers are only called up when a new
 user is added (ie, they login for the first time and an entry isn't
-found in auth_users that matches their UNI).
+found in `auth_users` that matches their UNI).
 
 ## Affil Handlers
 
@@ -165,7 +165,7 @@ What to do with wind affils?
 
 Django Auth includes Groups so the natural thing would be to map wind
 affils directly to groups. That's often a good idea, but Django Auth
-groups only have one 'name' field so that would have to be set to
+groups only have one `name` field so that would have to be set to
 match the wind affil string, which is ugly. Also, frequently we use
 wind affils to map students into "classes" which is conceptually a bit
 different from django auth groups. So we need a bit more flexibility
@@ -186,7 +186,7 @@ up at the next login.
 
 WIND also returns an affil for each user that matches their UNI. I'm
 not sure exactly why they do that, but you probably don't want to have
-a django auth Group for every UNI that logs in. AffilGroupMapper
+a django auth Group for every UNI that logs in. `AffilGroupMapper`
 strips that UNI group out automatically. If, for some reason, you
 really want those UNI groups, you can tell it not to strip them out by
 setting `WIND_AFFIL_GROUP_INCLUDE_UNI_GROUP` to `True` in your
