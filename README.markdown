@@ -243,8 +243,8 @@ Jonah will have superuser access.
 
 If those included helpers don't do everything you need, you can write
 your own and include it in `WIND_AFFIL_HANDLERS`. An Affil Handler is
-just a class with a map(self,user,affils) method. 'user' is the Django
-Auth User object, 'affils' is a list of wind affil strings. It's
+just a class with a `map(self, user, affils)` method. `user` is the Django
+Auth User object, `affils` is a list of wind affil strings. It's
 expected to do whatever needs to be done in terms of adding or
 removing groups and setting stuff on the user object.
 
