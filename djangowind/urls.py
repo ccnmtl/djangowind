@@ -1,4 +1,8 @@
-from django.conf.urls.defaults import patterns
+# flake8: noqa
+try:
+    from django.conf.urls import patterns
+except ImportError:
+    from django.conf.urls.defaults import patterns
 
 urlpatterns = patterns('',
                        (r'^login/$', 'djangowind.views.login'),
