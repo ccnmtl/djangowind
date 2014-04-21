@@ -3,8 +3,7 @@
 (you will of course need django's built in auth, sessions, and sites
 apps installed. That's done for you on a default install but if you've
 changed things, you might need to re-enable those and do a syncdb. The
-current version of djangowind works with Django 1.0+ (though it hasn't
-recently been tested on anything older than Django 1.4))
+current version of djangowind works with Django 1.4+)
 
 In your django app, you'll need to do a few things to enable it. 
 

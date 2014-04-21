@@ -40,9 +40,10 @@ def login(request, template_name='registration/login.html',
                 try:
                     request.session.delete_test_cookie()
                 except KeyError:
-                    pass  # somehow this always works in the core django
-                          # but often breaks in here even though it's
-                          # just a copy/paste of the core django login code
+                    # somehow this always works in the core django
+                    # but often breaks in here even though it's
+                    # just a copy/paste of the core django login code
+                    pass
             statsd.incr('djangowind.login_succeeded')
             return HttpResponseRedirect(redirect_to)
         else:
