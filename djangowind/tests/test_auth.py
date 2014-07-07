@@ -1,6 +1,7 @@
 from django.test import TestCase
 from httpretty import HTTPretty, httprettified
 from djangowind.auth import validate_wind_ticket, WindAuthBackend
+from djangowind.auth import validate_cas_ticket, CASAuthBackend
 from djangowind.auth import AffilGroupMapper, StaffMapper, SuperuserMapper
 from djangowind.auth import _handle_ldap_entry
 from django.contrib.auth.models import User, Group
@@ -67,6 +68,125 @@ class ValidateWindTicketTest(TestCase):
             self.assertEqual(
                 validate_wind_ticket("foo"),
                 (True, 'anders', ['anders']))
+
+
+class ValidateCasTicketTest(TestCase):
+    def test_no_ticket(self):
+        self.assertEqual(
+            validate_cas_ticket("", ""),
+            (False, 'no ticketid', ''))
+
+    @httprettified
+    def test_validate_ticket_success(self):
+        HTTPretty.register_uri(
+            HTTPretty.GET,
+            ("https://cas.columbia.edu/cas/serviceValidate?ticket=foo"
+             "&https%3A//slank.ccnmtl.columbia.edu/accounts/"
+             "caslogin/?next=/"),
+            body=(
+                "\n\n\n<cas:serviceResponse xmlns:cas='http://www."
+                "yale.edu/tp/cas'>\n\t<cas:authenticationSuccess>\n"
+                "\t\t<cas:user>anp8</cas:user>\n"
+                "\n"
+                "\n"
+                "\t</cas:authenticationSuccess>\n"
+                "</cas:serviceResponse>\n")
+        )
+        self.assertEqual(
+            validate_cas_ticket(
+                "foo",
+                "https://slank.ccnmtl.columbia.edu/accounts/caslogin/?next=/"),
+            (True, 'anp8', ['anp8']))
+
+    @httprettified
+    def test_validate_ticket_success_with_groups(self):
+        HTTPretty.register_uri(
+            HTTPretty.GET,
+            ("https://cas.columbia.edu/cas/serviceValidate?ticket=foo"
+             "&https%3A//slank.ccnmtl.columbia.edu/accounts/"
+             "caslogin/?next=/"),
+            body=(
+                "\n\n\n<cas:serviceResponse xmlns:cas='http://www."
+                "yale.edu/tp/cas'>\n\t<cas:authenticationSuccess>\n"
+                "\t\t<cas:user>anp8</cas:user>\n"
+                "\t\t<cas:attributes>\n"
+                "\t\t\t<cas:affiliation>group1</cas:affiliation>\n"
+                "\t\t\t<cas:affiliation>group2</cas:affiliation>\n"
+                "\t\t</cas:attributes>\n"
+                "\n"
+                "\n"
+                "\t</cas:authenticationSuccess>\n"
+                "</cas:serviceResponse>\n")
+        )
+
+        self.assertEqual(
+            validate_cas_ticket(
+                "foo",
+                "https://slank.ccnmtl.columbia.edu/accounts/caslogin/?next=/"),
+            (True, 'anp8', ['anp8', 'group1', 'group2']))
+
+    @httprettified
+    def test_validate_ticket_fail(self):
+        HTTPretty.register_uri(
+            HTTPretty.GET,
+            ("https://cas.columbia.edu/cas/serviceValidate?"
+             "ticket=foo&https%3A//slank.ccnmtl.columbia.edu/"
+             "accounts/caslogin/?next=/"),
+            body=(
+                "\n\n\n<cas:serviceResponse xmlns:cas='http"
+                "://www.yale.edu/tp/cas'>\n\t<cas:authenticationFailure "
+                "code='INVALID_SERVICE'>\n\t\tticket &#039;ST-181952-OK0"
+                "qr5suLueHccqPfgIT-idmcasprod2&#039; does not match supp"
+                "lied service.  The original service was &#039;https://"
+                "slank.ccnmtl.columbia.edu/accounts/caslogin/?next=/&#039;"
+                "and the supplied service was &#039;https://slank.ccnmtl."
+                "columbia.edu/accounts/caslogin/&#039;.\n\t</cas:authenti"
+                "cationFailure>\n</cas:serviceResponse>")
+        )
+        self.assertEqual(
+            validate_cas_ticket(
+                "foo",
+                "https://slank.ccnmtl.columbia.edu/accounts/caslogin/?next=/"),
+            (False, "The ticket was already used or was invalid.", []))
+
+    @httprettified
+    def test_validate_ticket_invalid_response(self):
+        HTTPretty.register_uri(
+            HTTPretty.GET,
+            ("https://cas.columbia.edu/cas/serviceValidate?"
+             "ticket=foo&https%3A//slank.ccnmtl.columbia.edu/"
+             "accounts/caslogin/?next=/"),
+            body="holy crap! I'm not a valid CAS response!"
+        )
+        self.assertEqual(
+            validate_cas_ticket(
+                "foo",
+                "https://slank.ccnmtl.columbia.edu/accounts/caslogin/?next=/"),
+            (False, "CAS did not return a valid response.", []))
+
+    @httprettified
+    def test_validate_ticket_alternate_case_base(self):
+        HTTPretty.register_uri(
+            HTTPretty.GET,
+            ("https://cas.example.com/cas/serviceValidate?ticket=foo"
+             "&https%3A//slank.ccnmtl.columbia.edu/accounts/"
+             "caslogin/?next=/"),
+            body=(
+                "\n\n\n<cas:serviceResponse xmlns:cas='http://www."
+                "yale.edu/tp/cas'>\n\t<cas:authenticationSuccess>\n"
+                "\t\t<cas:user>anp8</cas:user>\n"
+                "\n"
+                "\n"
+                "\t</cas:authenticationSuccess>\n"
+                "</cas:serviceResponse>\n")
+        )
+        with self.settings(CAS_BASE="https://cas.example.com/"):
+            self.assertEqual(
+                validate_cas_ticket(
+                    "foo",
+                    ("https://slank.ccnmtl.columbia.edu/accounts/"
+                     "caslogin/?next=/")),
+                (True, 'anp8', ['anp8']))
 
 
 class WindAuthBackendTest(TestCase):
@@ -142,6 +262,128 @@ class WindAuthBackendTest(TestCase):
         u = User.objects.create(username="test")
         r = w.get_user(u.id)
         self.assertEqual(r, u)
+
+
+class CASAuthBackendTest(TestCase):
+    def test_authenticate_no_ticket(self):
+        w = CASAuthBackend()
+        self.assertEqual(w.authenticate(None), None)
+
+    @httprettified
+    def test_authenticate_success(self):
+        HTTPretty.register_uri(
+            HTTPretty.GET,
+            ("https://cas.columbia.edu/cas/serviceValidate?ticket=foo"
+             "&https%3A//slank.ccnmtl.columbia.edu/accounts/"
+             "caslogin/?next=/"),
+            body=(
+                "\n\n\n<cas:serviceResponse xmlns:cas='http://www."
+                "yale.edu/tp/cas'>\n\t<cas:authenticationSuccess>\n"
+                "\t\t<cas:user>anp8</cas:user>\n"
+                "\n"
+                "\n"
+                "\t</cas:authenticationSuccess>\n"
+                "</cas:serviceResponse>\n")
+        )
+
+        w = CASAuthBackend()
+        r = w.authenticate(
+            "foo",
+            url=("https://slank.ccnmtl.columbia.edu/accounts/"
+                 "caslogin/?next=/"))
+        self.assertEqual(r.username, "anp8")
+        self.assertEqual(r.password, "!")
+
+        with self.settings(
+                WIND_PROFILE_HANDLERS=['djangowind.auth.DummyProfileHandler']):
+            w = CASAuthBackend()
+            r = w.authenticate(
+                "foo",
+                url=("https://slank.ccnmtl.columbia.edu/accounts/"
+                     "caslogin/?next=/"))
+            self.assertEqual(r.username, "anp8")
+            self.assertEqual(r.password, "!")
+
+    @httprettified
+    def test_authenticate_success_existing_user(self):
+        HTTPretty.register_uri(
+            HTTPretty.GET,
+            ("https://cas.columbia.edu/cas/serviceValidate?ticket=foo"
+             "&https%3A//slank.ccnmtl.columbia.edu/accounts/"
+             "caslogin/?next=/"),
+            body=(
+                "\n\n\n<cas:serviceResponse xmlns:cas='http://www."
+                "yale.edu/tp/cas'>\n\t<cas:authenticationSuccess>\n"
+                "\t\t<cas:user>anp8</cas:user>\n"
+                "\n"
+                "\n"
+                "\t</cas:authenticationSuccess>\n"
+                "</cas:serviceResponse>\n")
+        )
+
+        u = User.objects.create(username="anp8")
+        u.set_password("something other than unusable")
+        u.save()
+        w = CASAuthBackend()
+        r = w.authenticate(
+            "foo",
+            url=("https://slank.ccnmtl.columbia.edu/accounts/"
+                 "caslogin/?next=/"))
+        self.assertEqual(r.username, "anp8")
+        self.assertNotEqual(r.password, "!")
+
+    @httprettified
+    def test_authenticate_failure(self):
+        HTTPretty.register_uri(
+            HTTPretty.GET,
+            ("https://cas.columbia.edu/cas/serviceValidate?"
+             "ticket=foo&https%3A//slank.ccnmtl.columbia.edu/"
+             "accounts/caslogin/?next=/"),
+            body=(
+                "\n\n\n<cas:serviceResponse xmlns:cas='http"
+                "://www.yale.edu/tp/cas'>\n\t<cas:authenticationFailure "
+                "code='INVALID_SERVICE'>\n\t\tticket &#039;ST-181952-OK0"
+                "qr5suLueHccqPfgIT-idmcasprod2&#039; does not match supp"
+                "lied service.  The original service was &#039;https://"
+                "slank.ccnmtl.columbia.edu/accounts/caslogin/?next=/&#039;"
+                "and the supplied service was &#039;https://slank.ccnmtl."
+                "columbia.edu/accounts/caslogin/&#039;.\n\t</cas:authenti"
+                "cationFailure>\n</cas:serviceResponse>")
+        )
+
+        w = CASAuthBackend()
+        r = w.authenticate(
+            "foo",
+            url=("https://slank.ccnmtl.columbia.edu/accounts/"
+                 "caslogin/?next=/"))
+        self.assertEqual(r, None)
+
+    @httprettified
+    def test_authenticate_success_with_mappers(self):
+        HTTPretty.register_uri(
+            HTTPretty.GET,
+            ("https://cas.columbia.edu/cas/serviceValidate?ticket=foo"
+             "&https%3A//slank.ccnmtl.columbia.edu/accounts/"
+             "caslogin/?next=/"),
+            body=(
+                "\n\n\n<cas:serviceResponse xmlns:cas='http://www."
+                "yale.edu/tp/cas'>\n\t<cas:authenticationSuccess>\n"
+                "\t\t<cas:user>anp8</cas:user>\n"
+                "\n"
+                "\n"
+                "\t</cas:authenticationSuccess>\n"
+                "</cas:serviceResponse>\n")
+        )
+
+        with self.settings(
+                WIND_AFFIL_HANDLERS=['djangowind.auth.AffilGroupMapper']):
+            w = CASAuthBackend()
+            r = w.authenticate(
+                "foo",
+                url=("https://slank.ccnmtl.columbia.edu/accounts/"
+                     "caslogin/?next=/"))
+            self.assertEqual(r.username, "anp8")
+            self.assertEqual(r.password, "!")
 
 
 class AffilGroupMapperTest(TestCase):

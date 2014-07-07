@@ -7,6 +7,8 @@ current version of djangowind works with Django 1.4+)
 
 In your django app, you'll need to do a few things to enable it. 
 
+### For WIND
+
 First, add `'djangowind'` to `INSTALLED_APPS`. Then add 
 
     AUTHENTICATION_BACKENDS = ('djangowind.auth.WindAuthBackend',
@@ -263,3 +265,43 @@ belong to the Groups that match their WIND affils would look like:
                 groups.append(group)
             user.groups = groups
             user.save()
+
+
+## For CAS
+
+Same as WIND, with slightly different parameters:
+
+    AUTHENTICATION_BACKENDS = ('djangowind.auth.CASAuthBackend',
+                               'django.contrib.auth.backends.ModelBackend',)
+    CAS_BASE = "https://cas.columbia.edu/"
+
+You do not need to specify a service for CAS.
+
+All of the mappers are the same (and still named 'Wind*' for now).
+
+
+Your login template will need to be something like:
+
+    {% extends "base.html" %}
+    {% block content %}
+    {% if form.has_errors %}
+    <p>Your username and password didn't match. Please try again.</p>
+    {% endif %}
+    <form method="get" action="{{ cas_base }}login">
+    <input type="hidden" name="destination"
+       value="https://{{ request.get_url }}/accounts/caslogin/?next={{ next }}" />
+    <p>If you have a Columbia UNI, you already have an account and can
+       login through CAS with it</p>
+    <input type="submit" value="Here" />
+    </form>
+    <p>otherwise: </p>
+    <form method="post" action=".">
+    <table>
+    <tr><td><label for="id_username">Username:</label></td><td>{{ form.username }}</td></tr>
+    <tr><td><label for="id_password">Password:</label></td><td>{{ form.password }}</td></tr>
+    </table>
+    <input type="submit" value="login" />
+    <input type="hidden" name="next" value="{{ next }}" />
+    </form>
+    {% endblock %}
+

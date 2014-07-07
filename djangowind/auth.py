@@ -1,9 +1,11 @@
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 import urllib
+import urllib2
 from django.core.exceptions import ImproperlyConfigured
 from warnings import warn
 from django_statsd.clients import statsd
+from xml.dom.minidom import parseString
 
 
 def validate_wind_ticket(ticketid):
@@ -32,6 +34,48 @@ def validate_wind_ticket(ticketid):
     else:
         statsd.incr('djangowind.validate_wind_ticket.invalid')
         return (False, "WIND did not return a valid response.", [])
+
+
+def validate_cas_ticket(ticketid, url):
+    """
+    checks a cas ticketid.
+    if successful, it returns (True,username)
+    otherwise it returns (False,error message)
+    """
+    statsd.incr('djangowind.validate_cas_ticket.called')
+    if ticketid == "":
+        return (False, 'no ticketid', '')
+    cas_base = "https://cas.columbia.edu/"
+    if hasattr(settings, 'CAS_BASE'):
+        cas_base = getattr(settings, 'CAS_BASE')
+    uri = cas_base + "cas/serviceValidate?ticket=%s&service=%s" % (
+        ticketid,
+        urllib2.quote(url))
+    response = urllib.urlopen(uri).read()
+    try:
+        dom = parseString(response)
+        if dom.documentElement.nodeName != 'cas:serviceResponse':
+            return (False, "CAS did not return a valid response.", [])
+
+        failures = dom.getElementsByTagName('cas:authenticationFailure')
+        if len(failures) > 0:
+            statsd.incr('djangowind.validate_cas_ticket.fail')
+            return (False, "The ticket was already used or was invalid.", [])
+        successes = dom.getElementsByTagName('cas:authenticationSuccess')
+        if len(successes) > 0:
+            statsd.incr('djangowind.validate_cas_ticket.success')
+            users = dom.getElementsByTagName('cas:user')
+            username = str(users[0].firstChild.data)
+            groups = [username]
+            for g in dom.getElementsByTagName('cas:affiliation'):
+                groups.append(g.firstChild.data)
+            return (True, username, groups)
+
+        statsd.incr('djangowind.validate_cas_ticket.invalid')
+        return (False, "CAS did not return a valid response.", [])
+    except:
+        statsd.incr('djangowind.validate_cas_ticket.invalid')
+        return (False, "CAS did not return a valid response.", [])
 
 
 class WindAuthBackend(object):
@@ -104,6 +148,38 @@ class WindAuthBackend(object):
         for handler_path in settings.WIND_PROFILE_HANDLERS:
             handlers.append(self.load_handler(handler_path))
         return handlers
+
+
+class CASAuthBackend(WindAuthBackend):
+    def authenticate(self, ticket=None, url=None):
+        statsd.incr('djangowind.casauthbackend.authenticate.called')
+        if ticket is None:
+            return None
+        if url is None:
+            return None
+        (response, username, groups) = validate_cas_ticket(ticket, url)
+        if response is True:
+            try:
+                user = User.objects.get(username=username)
+            except User.DoesNotExist:
+                statsd.incr('djangowind.casauthbackend.create_user')
+                user = User(username=username, password='CAS user')
+                user.set_unusable_password()
+                user.save()
+
+            for handler in self.get_profile_handlers():
+                handler.process(user)
+
+            for handler in self.get_mappers():
+                handler.map(user, groups)
+            return user
+        else:
+            # i don't know how to actually get this error message
+            # to bubble back up to the user. must dig into
+            # django auth deeper.
+            statsd.incr('djangowind.casauthbackend.failure')
+            pass
+        return None
 
 
 def _handle_ldap_entry(result_data):
