@@ -6,6 +6,7 @@ from django.core.exceptions import ImproperlyConfigured
 from warnings import warn
 from django_statsd.clients import statsd
 from xml.dom.minidom import parseString
+from xml.etree import ElementTree
 
 
 def validate_wind_ticket(ticketid):
@@ -75,6 +76,134 @@ def validate_cas2_ticket(ticketid, url):
         return (False, "CAS did not return a valid response.", [])
     except:
         statsd.incr('djangowind.validate_cas2_ticket.invalid')
+        return (False, "CAS did not return a valid response.", [])
+
+
+"""
+here, we've nicked some code from
+
+    <https://bitbucket.org/cpcc/django-cas/src/
+    47d19f3a871fa744dabe884758f90fff6ba135d5/
+    django_cas/backends.py?at=default#cl-89>
+
+we couldn't quite use it directly because we need
+to deal with SAML 1.1, which is *slightly* different
+and we need a few more details on different error
+cases to handle and the format that we want
+affiliations returned in.
+
+But the next few functions are largely adapted from
+what was there.
+"""
+
+
+def get_saml_assertion(ticket):
+    return (
+        """<?xml version="1.0" encoding="UTF-8"?>"""
+        """<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://"""
+        """schemas.xmlsoap.org/soap/envelope/"><SOAP-ENV"""
+        """:Header/><SOAP-ENV:Body><samlp:Request xmlns:"""
+        """samlp="urn:oasis:names:tc:SAML:1.0:protocol"  """
+        """MajorVersion="1" MinorVersion="1" """
+        """RequestID="_192.168.16.51.1024506224022" """
+        """IssueInstant="2002-06-19T17:03:44.022Z">"""
+        """<samlp:AssertionArtifact>""" + ticket
+        + """</samlp:AssertionArtifact></samlp:Request>"""
+        """</SOAP-ENV:Body></SOAP-ENV:Envelope>""")
+
+SAML_1_0_NS = 'urn:oasis:names:tc:SAML:1.0:'
+SAML_1_0_PROTOCOL_NS = '{' + SAML_1_0_NS + 'protocol' + '}'
+SAML_1_0_ASSERTION_NS = '{' + SAML_1_0_NS + 'assertion' + '}'
+
+
+def validate_saml_ticket(ticketid, url):
+    """
+    checks a cas/saml ticketid.
+    if successful, it returns (True,username, groups)
+    otherwise it returns (False,error message, '')
+    """
+    statsd.incr('djangowind.validate_saml_ticket.called')
+    if ticketid == "":
+        return (False, 'no ticketid', '')
+    cas_base = "https://cas.columbia.edu/"
+    if hasattr(settings, 'CAS_BASE'):
+        cas_base = getattr(settings, 'CAS_BASE')
+    headers = {
+        'soapaction': 'http://www.oasis-open.org/committees/security',
+        'cache-control': 'no-cache',
+        'pragma': 'no-cache',
+        'accept': 'text/xml',
+        'connection': 'keep-alive',
+        'content-type': 'text/xml'}
+    params = {'TARGET': url}
+    uri = cas_base + "cas/samlValidate" + '?' + urllib.urlencode(params)
+    print uri
+    url = urllib2.Request(uri, '', headers)
+    data = get_saml_assertion(ticketid)
+    print data
+    url.add_data(data)
+
+    page = urllib2.urlopen(url)
+    response = page.read()
+    print response
+    try:
+        user = None
+        attributes = {}
+        tree = ElementTree.fromstring(response)
+        # Find the authentication status
+        success = tree.find('.//' + SAML_1_0_PROTOCOL_NS + 'StatusCode')
+        if success is None or success.attrib['Value'] != 'saml1p:Success':
+            statsd.incr('djangowind.validate_saml_ticket.fail')
+            return (False, "CAS/SAML Validation Failed", [])
+
+        print "user is validated"
+
+        # look for a username, it will come in something like this:
+        # <saml1:NameIdentifier>anp8</saml1:NameIdentifier>
+        identifiers = tree.findall(
+            './/' + SAML_1_0_ASSERTION_NS + 'NameIdentifier')
+
+        if not identifiers or len(identifiers) < 1:
+            statsd.incr('djangowind.validate_saml_ticket.invalid')
+            return (False, "CAS did not return a valid response.", [])
+
+        user = identifiers[0].text
+        print user
+
+        # pull out attributes. they come packaged up like this:
+
+        # <saml1:Attribute AttributeName="affiliation"
+        # AttributeNamespace="http://www.ja-sig.org/products/cas/">
+        # <saml1:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        # xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        # xsi:type="xs:string">cul.cunix.local:columbia.edu
+        # </saml1:AttributeValue> ... </saml1:Attribute>
+
+        attrs = tree.findall('.//' + SAML_1_0_ASSERTION_NS + 'Attribute')
+        affils = [user]
+        for at in attrs:
+            print str(at.attrib.values())
+            if 'uid' in at.attrib.values():
+                user = at.find(SAML_1_0_ASSERTION_NS + 'AttributeValue').text
+                attributes['uid'] = user
+                print user
+            values = at.findall(SAML_1_0_ASSERTION_NS + 'AttributeValue')
+            if len(values) > 1:
+                values_array = []
+                for v in values:
+                    values_array.append(v.text)
+                attributes[at.attrib['AttributeName']] = values_array
+            else:
+                attributes[at.attrib['AttributeName']] = values[0].text
+        for a in attributes.get('affiliation', []):
+            affils.append(a)
+        statsd.incr('djangowind.validate_saml_ticket.success')
+        return (True, user, affils)
+
+    except Exception, e:
+        print "hit an exception"
+        print str(e)
+        statsd.incr('djangowind.validate_saml_ticket.invalid')
         return (False, "CAS did not return a valid response.", [])
 
 
@@ -178,6 +307,38 @@ class CAS2AuthBackend(WindAuthBackend):
             # to bubble back up to the user. must dig into
             # django auth deeper.
             statsd.incr('djangowind.casauthbackend.failure')
+            pass
+        return None
+
+
+class SAMLAuthBackend(WindAuthBackend):
+    def authenticate(self, ticket=None, url=None):
+        statsd.incr('djangowind.samlauthbackend.authenticate.called')
+        if ticket is None:
+            return None
+        if url is None:
+            return None
+        (response, username, groups) = validate_saml_ticket(ticket, url)
+        if response is True:
+            try:
+                user = User.objects.get(username=username)
+            except User.DoesNotExist:
+                statsd.incr('djangowind.samlauthbackend.create_user')
+                user = User(username=username, password='CAS/SAML user')
+                user.set_unusable_password()
+                user.save()
+
+            for handler in self.get_profile_handlers():
+                handler.process(user)
+
+            for handler in self.get_mappers():
+                handler.map(user, groups)
+            return user
+        else:
+            # i don't know how to actually get this error message
+            # to bubble back up to the user. must dig into
+            # django auth deeper.
+            statsd.incr('djangowind.samlauthbackend.failure')
             pass
         return None
 
