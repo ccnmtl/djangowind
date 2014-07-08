@@ -36,13 +36,13 @@ def validate_wind_ticket(ticketid):
         return (False, "WIND did not return a valid response.", [])
 
 
-def validate_cas_ticket(ticketid, url):
+def validate_cas2_ticket(ticketid, url):
     """
     checks a cas ticketid.
     if successful, it returns (True,username)
     otherwise it returns (False,error message)
     """
-    statsd.incr('djangowind.validate_cas_ticket.called')
+    statsd.incr('djangowind.validate_cas2_ticket.called')
     if ticketid == "":
         return (False, 'no ticketid', '')
     cas_base = "https://cas.columbia.edu/"
@@ -59,11 +59,11 @@ def validate_cas_ticket(ticketid, url):
 
         failures = dom.getElementsByTagName('cas:authenticationFailure')
         if len(failures) > 0:
-            statsd.incr('djangowind.validate_cas_ticket.fail')
+            statsd.incr('djangowind.validate_cas2_ticket.fail')
             return (False, "The ticket was already used or was invalid.", [])
         successes = dom.getElementsByTagName('cas:authenticationSuccess')
         if len(successes) > 0:
-            statsd.incr('djangowind.validate_cas_ticket.success')
+            statsd.incr('djangowind.validate_cas2_ticket.success')
             users = dom.getElementsByTagName('cas:user')
             username = str(users[0].firstChild.data)
             groups = [username]
@@ -71,10 +71,10 @@ def validate_cas_ticket(ticketid, url):
                 groups.append(g.firstChild.data)
             return (True, username, groups)
 
-        statsd.incr('djangowind.validate_cas_ticket.invalid')
+        statsd.incr('djangowind.validate_cas2_ticket.invalid')
         return (False, "CAS did not return a valid response.", [])
     except:
-        statsd.incr('djangowind.validate_cas_ticket.invalid')
+        statsd.incr('djangowind.validate_cas2_ticket.invalid')
         return (False, "CAS did not return a valid response.", [])
 
 
@@ -150,19 +150,19 @@ class WindAuthBackend(object):
         return handlers
 
 
-class CASAuthBackend(WindAuthBackend):
+class CAS2AuthBackend(WindAuthBackend):
     def authenticate(self, ticket=None, url=None):
-        statsd.incr('djangowind.casauthbackend.authenticate.called')
+        statsd.incr('djangowind.cas2authbackend.authenticate.called')
         if ticket is None:
             return None
         if url is None:
             return None
-        (response, username, groups) = validate_cas_ticket(ticket, url)
+        (response, username, groups) = validate_cas2_ticket(ticket, url)
         if response is True:
             try:
                 user = User.objects.get(username=username)
             except User.DoesNotExist:
-                statsd.incr('djangowind.casauthbackend.create_user')
+                statsd.incr('djangowind.cas2authbackend.create_user')
                 user = User(username=username, password='CAS user')
                 user.set_unusable_password()
                 user.save()

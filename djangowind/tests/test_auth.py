@@ -1,7 +1,7 @@
 from django.test import TestCase
 from httpretty import HTTPretty, httprettified
 from djangowind.auth import validate_wind_ticket, WindAuthBackend
-from djangowind.auth import validate_cas_ticket, CASAuthBackend
+from djangowind.auth import validate_cas2_ticket, CAS2AuthBackend
 from djangowind.auth import AffilGroupMapper, StaffMapper, SuperuserMapper
 from djangowind.auth import _handle_ldap_entry
 from django.contrib.auth.models import User, Group
@@ -70,10 +70,10 @@ class ValidateWindTicketTest(TestCase):
                 (True, 'anders', ['anders']))
 
 
-class ValidateCasTicketTest(TestCase):
+class ValidateCas2TicketTest(TestCase):
     def test_no_ticket(self):
         self.assertEqual(
-            validate_cas_ticket("", ""),
+            validate_cas2_ticket("", ""),
             (False, 'no ticketid', ''))
 
     @httprettified
@@ -93,7 +93,7 @@ class ValidateCasTicketTest(TestCase):
                 "</cas:serviceResponse>\n")
         )
         self.assertEqual(
-            validate_cas_ticket(
+            validate_cas2_ticket(
                 "foo",
                 "https://slank.ccnmtl.columbia.edu/accounts/caslogin/?next=/"),
             (True, 'anp8', ['anp8']))
@@ -120,7 +120,7 @@ class ValidateCasTicketTest(TestCase):
         )
 
         self.assertEqual(
-            validate_cas_ticket(
+            validate_cas2_ticket(
                 "foo",
                 "https://slank.ccnmtl.columbia.edu/accounts/caslogin/?next=/"),
             (True, 'anp8', ['anp8', 'group1', 'group2']))
@@ -144,7 +144,7 @@ class ValidateCasTicketTest(TestCase):
                 "cationFailure>\n</cas:serviceResponse>")
         )
         self.assertEqual(
-            validate_cas_ticket(
+            validate_cas2_ticket(
                 "foo",
                 "https://slank.ccnmtl.columbia.edu/accounts/caslogin/?next=/"),
             (False, "The ticket was already used or was invalid.", []))
@@ -159,7 +159,7 @@ class ValidateCasTicketTest(TestCase):
             body="holy crap! I'm not a valid CAS response!"
         )
         self.assertEqual(
-            validate_cas_ticket(
+            validate_cas2_ticket(
                 "foo",
                 "https://slank.ccnmtl.columbia.edu/accounts/caslogin/?next=/"),
             (False, "CAS did not return a valid response.", []))
@@ -182,7 +182,7 @@ class ValidateCasTicketTest(TestCase):
         )
         with self.settings(CAS_BASE="https://cas.example.com/"):
             self.assertEqual(
-                validate_cas_ticket(
+                validate_cas2_ticket(
                     "foo",
                     ("https://slank.ccnmtl.columbia.edu/accounts/"
                      "caslogin/?next=/")),
@@ -264,9 +264,9 @@ class WindAuthBackendTest(TestCase):
         self.assertEqual(r, u)
 
 
-class CASAuthBackendTest(TestCase):
+class CAS2AuthBackendTest(TestCase):
     def test_authenticate_no_ticket(self):
-        w = CASAuthBackend()
+        w = CAS2AuthBackend()
         self.assertEqual(w.authenticate(None), None)
 
     @httprettified
@@ -286,7 +286,7 @@ class CASAuthBackendTest(TestCase):
                 "</cas:serviceResponse>\n")
         )
 
-        w = CASAuthBackend()
+        w = CAS2AuthBackend()
         r = w.authenticate(
             "foo",
             url=("https://slank.ccnmtl.columbia.edu/accounts/"
@@ -296,7 +296,7 @@ class CASAuthBackendTest(TestCase):
 
         with self.settings(
                 WIND_PROFILE_HANDLERS=['djangowind.auth.DummyProfileHandler']):
-            w = CASAuthBackend()
+            w = CAS2AuthBackend()
             r = w.authenticate(
                 "foo",
                 url=("https://slank.ccnmtl.columbia.edu/accounts/"
@@ -324,7 +324,7 @@ class CASAuthBackendTest(TestCase):
         u = User.objects.create(username="anp8")
         u.set_password("something other than unusable")
         u.save()
-        w = CASAuthBackend()
+        w = CAS2AuthBackend()
         r = w.authenticate(
             "foo",
             url=("https://slank.ccnmtl.columbia.edu/accounts/"
@@ -351,7 +351,7 @@ class CASAuthBackendTest(TestCase):
                 "cationFailure>\n</cas:serviceResponse>")
         )
 
-        w = CASAuthBackend()
+        w = CAS2AuthBackend()
         r = w.authenticate(
             "foo",
             url=("https://slank.ccnmtl.columbia.edu/accounts/"
@@ -377,7 +377,7 @@ class CASAuthBackendTest(TestCase):
 
         with self.settings(
                 WIND_AFFIL_HANDLERS=['djangowind.auth.AffilGroupMapper']):
-            w = CASAuthBackend()
+            w = CAS2AuthBackend()
             r = w.authenticate(
                 "foo",
                 url=("https://slank.ccnmtl.columbia.edu/accounts/"
