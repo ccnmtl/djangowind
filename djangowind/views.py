@@ -145,7 +145,15 @@ def caslogin(request, redirect_field_name=REDIRECT_FIELD_NAME):
     """ validates the WIND ticket and logs the user in """
     if 'ticketid' in request.GET:
         statsd.incr('djangowind.caslogin.called')
-        url = request.session['cas_service_url']
+        url = request.session.get(
+            'cas_service_url',
+            # if we didn't have one stashed in the session
+            # the best guess is that it was for django admin
+            # so, this is a bit magic, but I don't have any better
+            # ideas right now
+            "https://" + request.get_host() + "/accounts/caslogin/"
+            + "?next=/admin/&this_is_the_login_form=1"
+        )
         u = authenticate(ticket=request.GET['ticketid'], url=url)
         if u is not None:
             redirect_to = request.REQUEST.get(redirect_field_name, '')
