@@ -137,15 +137,12 @@ def validate_saml_ticket(ticketid, url):
         'content-type': 'text/xml'}
     params = {'TARGET': url}
     uri = cas_base + "cas/samlValidate" + '?' + urllib.urlencode(params)
-    print uri
     url = urllib2.Request(uri, '', headers)
     data = get_saml_assertion(ticketid)
-    print data
     url.add_data(data)
 
     page = urllib2.urlopen(url)
     response = page.read()
-    print response
     try:
         user = None
         attributes = {}
@@ -155,8 +152,6 @@ def validate_saml_ticket(ticketid, url):
         if success is None or success.attrib['Value'] != 'saml1p:Success':
             statsd.incr('djangowind.validate_saml_ticket.fail')
             return (False, "CAS/SAML Validation Failed", [])
-
-        print "user is validated"
 
         # look for a username, it will come in something like this:
         # <saml1:NameIdentifier>anp8</saml1:NameIdentifier>
@@ -168,7 +163,6 @@ def validate_saml_ticket(ticketid, url):
             return (False, "CAS did not return a valid response.", [])
 
         user = identifiers[0].text
-        print user
 
         # pull out attributes. they come packaged up like this:
 
@@ -182,11 +176,9 @@ def validate_saml_ticket(ticketid, url):
         attrs = tree.findall('.//' + SAML_1_0_ASSERTION_NS + 'Attribute')
         affils = [user]
         for at in attrs:
-            print str(at.attrib.values())
             if 'uid' in at.attrib.values():
                 user = at.find(SAML_1_0_ASSERTION_NS + 'AttributeValue').text
                 attributes['uid'] = user
-                print user
             values = at.findall(SAML_1_0_ASSERTION_NS + 'AttributeValue')
             if len(values) > 1:
                 values_array = []
@@ -200,9 +192,7 @@ def validate_saml_ticket(ticketid, url):
         statsd.incr('djangowind.validate_saml_ticket.success')
         return (True, user, affils)
 
-    except Exception, e:
-        print "hit an exception"
-        print str(e)
+    except:
         statsd.incr('djangowind.validate_saml_ticket.invalid')
         return (False, "CAS did not return a valid response.", [])
 
