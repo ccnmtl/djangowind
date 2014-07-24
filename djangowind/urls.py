@@ -3,6 +3,8 @@ from django.conf.urls import patterns
 urlpatterns = patterns('',
                        (r'^login/$', 'djangowind.views.login'),
                        (r'^windlogin/$', 'djangowind.views.windlogin'),
+                       (r'^caslogin/$', 'djangowind.views.caslogin',
+                        {}, 'cas-login'),
                        (r'^logout/$', 'djangowind.views.logout'),
                        (r'^logout_then_login/$',
                         'django.contrib.auth.views.logout_then_login'),
