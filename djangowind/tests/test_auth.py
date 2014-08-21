@@ -6,6 +6,7 @@ from djangowind.auth import validate_saml_ticket, SAMLAuthBackend
 from djangowind.auth import AffilGroupMapper, StaffMapper, SuperuserMapper
 from djangowind.auth import _handle_ldap_entry
 from django.contrib.auth.models import User, Group
+import os.path
 
 
 class ValidateWindTicketTest(TestCase):
@@ -288,6 +289,14 @@ def saml_success_affils():
     return SAML_SUCCESS_1 + SAML_AFFILS + SAML_SUCCESS_2
 
 
+def jonah_affils():
+    return open(
+        os.path.join(
+            os.path.dirname(__file__),
+            "jonah_affils.txt")
+    ).read()
+
+
 class ValidateSAMLTicketTest(TestCase):
     def test_no_ticket(self):
         self.assertEqual(
@@ -375,6 +384,58 @@ class ValidateSAMLTicketTest(TestCase):
                     ("https://slank.ccnmtl.columbia.edu/accounts/"
                      "caslogin/?next=/")),
                 (True, 'anp8', ['anp8']))
+
+    @httprettified
+    def test_validate_ticket_with_jonah_affils(self):
+        HTTPretty.register_uri(
+            HTTPretty.POST,
+            ("https://cas.columbia.edu/cas/samlValidate?"
+             "TARGET=https%3A%2F%2Fslank.ccnmtl.columbia.edu"
+             "%2Faccounts%2Fcaslogin%2F%3Fnext%3D%2F"),
+            body=jonah_affils()
+        )
+        self.assertEqual(
+            validate_saml_ticket(
+                "foo",
+                "https://slank.ccnmtl.columbia.edu/accounts/caslogin/?next=/"),
+            (True, 'jb2410',
+             ['jb2410', 'cul.cunix.local:columbia.edu',
+              'culblogs.cunix.local:columbia.edu',
+              'digdante.cunix.local:columbia.edu',
+              'etsgroup.cunix.local:columbia.edu',
+              'libinfosys.cunix.local:columbia.edu',
+              'spc.cunix.local:columbia.edu',
+              'staff.cunix.local:columbia.edu',
+              'tlc.cunix.local:columbia.edu',
+              'tlc-pt.cunix.local:columbia.edu',
+              'tlcxml.cunix.local:columbia.edu',
+              't1.y2011.s001.cy4199.a&hh.st.course:columbia.edu',
+              't1.y2008.s002.cy5010.a&h.st.course:columbia.edu',
+              't3.y2008.s001.ca4469.arch.st.course:columbia.edu',
+              't3.y2010.s001.ca4642.arch.st.course:columbia.edu',
+              't1.y2010.s001.cb8210.buec.st.course:columbia.edu',
+              't3.y2008.s001.cj6019.jour.st.course:columbia.edu',
+              't3.y2009.s001.cj9042.jour.st.course:columbia.edu',
+              't1.y2009.s001.cj9055.jour.st.course:columbia.edu',
+              't3.y2011.s002.cj9900.jour.st.course:columbia.edu',
+              't1.y2010.s007.cy4901.mstu.st.course:columbia.edu',
+              't1.y2008.s005.cy6901.mstu.st.course:columbia.edu',
+              't1.y2011.s001.ck4220.nmed.st.course:columbia.edu',
+              't1.y2009.s001.co2206.nyug.st.course:columbia.edu',
+              't3.y2010.s001.cg4010.ohma.st.course:columbia.edu',
+              't1.y2008.s001.cg8247.pols.st.course:columbia.edu',
+              't3.y2009.s001.cj0002.resi.st.course:columbia.edu',
+              't1.y2010.s001.cj0002.resi.st.course:columbia.edu',
+              't3.y2010.s001.cj0002.resi.st.course:columbia.edu',
+              't1.y2011.s001.cj0002.resi.st.course:columbia.edu',
+              't1.y2012.s001.cj0001.rsrh.st.course:columbia.edu',
+              't3.y2012.s001.cj0001.rsrh.st.course:columbia.edu',
+              't1.y2013.s001.cj0001.rsrh.st.course:columbia.edu',
+              't3.y2013.s001.cj0001.rsrh.st.course:columbia.edu',
+              't1.y2014.s001.cj0001.rsrh.st.course:columbia.edu',
+              't3.y2014.s001.cj0001.rsrh.st.course:columbia.edu',
+              't3.y2009.s001.cg8200.soci.st.course:columbia.edu']))
+
 
 
 class WindAuthBackendTest(TestCase):

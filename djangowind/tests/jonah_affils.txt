@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SOAP-ENV:Envelope
+    xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
+    <SOAP-ENV:Body>
+        <saml1p:Response
+            xmlns:saml1p="urn:oasis:names:tc:SAML:1.0:protocol"
+            IssueInstant="2014-08-12T18:50:35.513Z"
+            MajorVersion="1" MinorVersion="1"
+            Recipient="https://diotima.ccnmtl.columbia.edu/accounts/caslogin/?next=/"
+            ResponseID="_ddea18e247e42cd5fa1a312eb20b71ae">
+            <saml1p:Status>
+                <saml1p:StatusCode Value="saml1p:Success"/>
+            </saml1p:Status>
+            <saml1:Assertion
+                xmlns:saml1="urn:oasis:names:tc:SAML:1.0:assertion"
+                AssertionID="_63b7a5992959ddaf033e04fd48211040"
+                IssueInstant="2014-08-12T18:50:35.513Z"
+                Issuer="localhost"
+                MajorVersion="1"
+                MinorVersion="1">
+                <saml1:Conditions NotBefore="2014-08-12T18:50:35.513Z" NotOnOrAfter="2014-08-12T18:51:05.513Z">
+                    <saml1:AudienceRestrictionCondition>
+                        <saml1:Audience>https://diotima.ccnmtl.columbia.edu/accounts/caslogin/?next=/</saml1:Audience>
+                    </saml1:AudienceRestrictionCondition>
+                </saml1:Conditions>
+                <saml1:AuthenticationStatement
+                    AuthenticationInstant="2014-08-12T18:49:16.567Z"
+                    AuthenticationMethod="urn:oasis:names:tc:SAML:1.0:am:unspecified">
+                    <saml1:Subject>
+                        <saml1:NameIdentifier>jb2410</saml1:NameIdentifier>
+                        <saml1:SubjectConfirmation>
+                            <saml1:ConfirmationMethod>urn:oasis:names:tc:SAML:1.0:cm:artifact</saml1:ConfirmationMethod>
+                        </saml1:SubjectConfirmation>
+                    </saml1:Subject>
+                </saml1:AuthenticationStatement>
+                <saml1:AttributeStatement>
+                    <saml1:Subject>
+                        <saml1:NameIdentifier>jb2410</saml1:NameIdentifier>
+                        <saml1:SubjectConfirmation>
+                            <saml1:ConfirmationMethod>urn:oasis:names:tc:SAML:1.0:cm:artifact</saml1:ConfirmationMethod>
+                        </saml1:SubjectConfirmation>
+                    </saml1:Subject>
+                    <saml1:Attribute AttributeName="lastPasswordChangeDate" AttributeNamespace="http://www.ja-sig.org/products/cas/">
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">Sat Jun 28 13:17:31 EDT 2014
+                        </saml1:AttributeValue>
+                    </saml1:Attribute>
+                    <saml1:Attribute AttributeName="affiliation" AttributeNamespace="http://www.ja-sig.org/products/cas/">
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">cul.cunix.local:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">culblogs.cunix.local:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">digdante.cunix.local:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">etsgroup.cunix.local:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">libinfosys.cunix.local:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">spc.cunix.local:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">staff.cunix.local:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">tlc.cunix.local:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">tlc-pt.cunix.local:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">tlcxml.cunix.local:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">t1.y2011.s001.cy4199.a&amp;hh.st.course:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">t1.y2008.s002.cy5010.a&amp;h.st.course:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">t3.y2008.s001.ca4469.arch.st.course:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">t3.y2010.s001.ca4642.arch.st.course:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">t1.y2010.s001.cb8210.buec.st.course:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">t3.y2008.s001.cj6019.jour.st.course:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">t3.y2009.s001.cj9042.jour.st.course:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">t1.y2009.s001.cj9055.jour.st.course:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">t3.y2011.s002.cj9900.jour.st.course:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">t1.y2010.s007.cy4901.mstu.st.course:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">t1.y2008.s005.cy6901.mstu.st.course:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">t1.y2011.s001.ck4220.nmed.st.course:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">t1.y2009.s001.co2206.nyug.st.course:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">t3.y2010.s001.cg4010.ohma.st.course:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">t1.y2008.s001.cg8247.pols.st.course:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">t3.y2009.s001.cj0002.resi.st.course:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">t1.y2010.s001.cj0002.resi.st.course:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">t3.y2010.s001.cj0002.resi.st.course:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">t1.y2011.s001.cj0002.resi.st.course:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">t1.y2012.s001.cj0001.rsrh.st.course:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">t3.y2012.s001.cj0001.rsrh.st.course:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">t1.y2013.s001.cj0001.rsrh.st.course:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">t3.y2013.s001.cj0001.rsrh.st.course:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">t1.y2014.s001.cj0001.rsrh.st.course:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">t3.y2014.s001.cj0001.rsrh.st.course:columbia.edu
+                        </saml1:AttributeValue>
+                        <saml1:AttributeValue
+                            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">t3.y2009.s001.cg8200.soci.st.course:columbia.edu
+                        </saml1:AttributeValue>
+                    </saml1:Attribute>
+                </saml1:AttributeStatement>
+            </saml1:Assertion>
+        </saml1p:Response>
+    </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>
