@@ -157,7 +157,6 @@ def validate_saml_ticket(ticketid, url):
         # <saml1:NameIdentifier>anp8</saml1:NameIdentifier>
         identifiers = tree.findall(
             './/' + SAML_1_0_ASSERTION_NS + 'NameIdentifier')
-
         if not identifiers or len(identifiers) < 1:
             statsd.incr('djangowind.validate_saml_ticket.invalid')
             return (False, "CAS did not return a valid response.", [])
@@ -188,7 +187,7 @@ def validate_saml_ticket(ticketid, url):
             else:
                 attributes[at.attrib['AttributeName']] = values[0].text
         for a in attributes.get('affiliation', []):
-            affils.append(a)
+            affils.append(a.strip())
         statsd.incr('djangowind.validate_saml_ticket.success')
         return (True, user, affils)
 
