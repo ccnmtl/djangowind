@@ -437,7 +437,6 @@ class ValidateSAMLTicketTest(TestCase):
               't3.y2009.s001.cg8200.soci.st.course:columbia.edu']))
 
 
-
 class WindAuthBackendTest(TestCase):
     def test_authenticate_no_ticket(self):
         w = WindAuthBackend()

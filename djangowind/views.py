@@ -54,8 +54,11 @@ def login(request, template_name='registration/login.html',
         form = AuthenticationForm(request)
     request.session.set_test_cookie()
 
+    protocol = "https"
+    if not request.is_secure():
+        protocol = "http"
     request.session['cas_service_url'] = (
-        "https://%s%s?next=%s" % (
+        protocol + "://%s%s?next=%s" % (
             request.get_host(), reverse('cas-login'),
             request.GET.get('next', '/')))
 
@@ -145,13 +148,16 @@ def caslogin(request, redirect_field_name=REDIRECT_FIELD_NAME):
     """ validates the WIND ticket and logs the user in """
     if 'ticketid' in request.GET:
         statsd.incr('djangowind.caslogin.called')
+        protocol = "https"
+        if not request.is_secure():
+            protocol = "https"
         url = request.session.get(
             'cas_service_url',
             # if we didn't have one stashed in the session
             # the best guess is that it was for django admin
             # so, this is a bit magic, but I don't have any better
             # ideas right now
-            "https://" + request.get_host() + "/accounts/caslogin/"
+            protocol + "://" + request.get_host() + "/accounts/caslogin/"
             + "?next=/admin/&this_is_the_login_form=1"
         )
         u = authenticate(ticket=request.GET['ticketid'], url=url)
