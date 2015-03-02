@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/ccnmtl/djangowind.svg?branch=master)](https://travis-ci.org/ccnmtl/djangowind)
+
 ## Basic Usage
 
 (you will of course need django's built in auth, sessions, and sites

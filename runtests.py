@@ -1,11 +1,13 @@
 """ run tests for djangowind
 
 $ virtualenv ve
+$ ./ve/bin/pip install Django==1.7.6
 $ ./ve/bin/pip install -r test_reqs.txt
 $ ./ve/bin/python runtests.py
 """
 
 
+import django
 from django.conf import settings
 from django.core.management import call_command
 
@@ -14,6 +16,11 @@ def main():
     # Dynamically configure the Django settings with the minimum necessary to
     # get Django running tests
     settings.configure(
+        MIDDLEWARE_CLASSES=(
+            'django.contrib.sessions.middleware.SessionMiddleware',
+            'django.contrib.auth.middleware.AuthenticationMiddleware',
+            'django.contrib.messages.middleware.MessageMiddleware',
+        ),
         INSTALLED_APPS=(
             'django.contrib.auth',
             'django.contrib.contenttypes',
@@ -37,7 +44,6 @@ def main():
 
         JENKINS_TASKS = (
             'django_jenkins.tasks.with_coverage',
-            'django_jenkins.tasks.django_tests',
         ),
         PROJECT_APPS = [
             'djangowind',
@@ -54,6 +60,12 @@ def main():
             }
         },
     )
+
+    try:
+        # required by Django 1.7 and later
+        django.setup()
+    except:
+        pass
 
     # Fire off the tests
     call_command('jenkins')
