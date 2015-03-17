@@ -452,14 +452,14 @@ class WindAuthBackendTest(TestCase):
         w = WindAuthBackend()
         r = w.authenticate("foo")
         self.assertEqual(r.username, "anders")
-        self.assertEqual(r.password, "!")
+        self.assertFalse(r.has_usable_password())
 
         with self.settings(
                 WIND_PROFILE_HANDLERS=['djangowind.auth.DummyProfileHandler']):
             w = WindAuthBackend()
             r = w.authenticate("foo")
             self.assertEqual(r.username, "anders")
-            self.assertEqual(r.password, "!")
+            self.assertFalse(r.has_usable_password())
 
     @httprettified
     def test_authenticate_success_existing_user(self):
@@ -499,7 +499,7 @@ class WindAuthBackendTest(TestCase):
             w = WindAuthBackend()
             r = w.authenticate("foo")
             self.assertEqual(r.username, "anders")
-            self.assertEqual(r.password, "!")
+            self.assertFalse(r.has_usable_password())
 
     def test_get_user(self):
         w = WindAuthBackend()
@@ -540,7 +540,7 @@ class CAS2AuthBackendTest(TestCase):
             url=("https://slank.ccnmtl.columbia.edu/accounts/"
                  "caslogin/?next=/"))
         self.assertEqual(r.username, "anp8")
-        self.assertEqual(r.password, "!")
+        self.assertFalse(r.has_usable_password())
 
         with self.settings(
                 WIND_PROFILE_HANDLERS=['djangowind.auth.DummyProfileHandler']):
@@ -550,7 +550,7 @@ class CAS2AuthBackendTest(TestCase):
                 url=("https://slank.ccnmtl.columbia.edu/accounts/"
                      "caslogin/?next=/"))
             self.assertEqual(r.username, "anp8")
-            self.assertEqual(r.password, "!")
+            self.assertFalse(r.has_usable_password())
 
     @httprettified
     def test_authenticate_success_existing_user(self):
@@ -631,7 +631,7 @@ class CAS2AuthBackendTest(TestCase):
                 url=("https://slank.ccnmtl.columbia.edu/accounts/"
                      "caslogin/?next=/"))
             self.assertEqual(r.username, "anp8")
-            self.assertEqual(r.password, "!")
+            self.assertFalse(r.has_usable_password())
 
 
 class SAMLAuthBackendTest(TestCase):
@@ -655,7 +655,7 @@ class SAMLAuthBackendTest(TestCase):
             url=("https://slank.ccnmtl.columbia.edu/accounts/"
                  "caslogin/?next=/"))
         self.assertEqual(r.username, "anp8")
-        self.assertEqual(r.password, "!")
+        self.assertFalse(r.has_usable_password())
 
         with self.settings(
                 WIND_PROFILE_HANDLERS=['djangowind.auth.DummyProfileHandler']):
@@ -665,7 +665,7 @@ class SAMLAuthBackendTest(TestCase):
                 url=("https://slank.ccnmtl.columbia.edu/accounts/"
                      "caslogin/?next=/"))
             self.assertEqual(r.username, "anp8")
-            self.assertEqual(r.password, "!")
+            self.assertFalse(r.has_usable_password())
 
     @httprettified
     def test_authenticate_success_existing_user(self):
@@ -722,7 +722,7 @@ class SAMLAuthBackendTest(TestCase):
                 url=("https://slank.ccnmtl.columbia.edu/accounts/"
                      "caslogin/?next=/"))
             self.assertEqual(r.username, "anp8")
-            self.assertEqual(r.password, "!")
+            self.assertFalse(r.has_usable_password())
 
 
 class AffilGroupMapperTest(TestCase):
