@@ -15,6 +15,7 @@ from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.core.urlresolvers import reverse
 
 from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import csrf_exempt
 from django_statsd.clients import statsd
 
 # copied from django.contrib.auth.views
@@ -24,6 +25,7 @@ from django_statsd.clients import statsd
 SESSION_KEY = 'edu.columbia.wind'
 
 
+@csrf_exempt
 def login(request, template_name='registration/login.html',
           redirect_field_name=REDIRECT_FIELD_NAME):
     "Displays the login form and handles the login action."
@@ -102,6 +104,7 @@ def get_cas_base():
         return None
 
 
+@csrf_exempt
 def logout(request, next_page=None,
            template_name='registration/logged_out.html',
            redirect_field_name=REDIRECT_FIELD_NAME):
@@ -117,6 +120,7 @@ def logout(request, next_page=None,
                                 redirect_field_name)
 
 
+@csrf_exempt
 def windlogin(request, redirect_field_name=REDIRECT_FIELD_NAME):
     """ validates the WIND ticket and logs the user in """
     if 'ticketid' in request.GET:
@@ -144,6 +148,7 @@ def windlogin(request, redirect_field_name=REDIRECT_FIELD_NAME):
     return HttpResponseForbidden("could not login through WIND")
 
 
+@csrf_exempt
 def caslogin(request, redirect_field_name=REDIRECT_FIELD_NAME):
     """ validates the WIND ticket and logs the user in """
     if 'ticketid' in request.GET:
