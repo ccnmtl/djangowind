@@ -1,4 +1,4 @@
-# Copyright (c) 2007, Columbia Center For New Media Teaching And Learning (CCNMTL)
+# Copyright (c) 2007-2015, Columbia Center For New Media Teaching And Learning (CCNMTL)
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,10 +27,10 @@ from setuptools import setup, find_packages
 
 setup(
     name="djangowind",
-    version="0.13.2",
+    version="0.13.3",
     author="Anders Pearson",
     author_email="anders@columbia.edu",
-    url="http://wiki.ccnmtl.columbia.edu/index.php/Django_Wind",
+    url="https://github.com/ccnmtl/djangowind",
     description="Django Authentication backend for CU WIND",
     long_description="Django Authentication backend for CU WIND and associated helpers",
     install_requires = [],
