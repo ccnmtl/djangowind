@@ -88,7 +88,8 @@ class ValidateTRCasTicketTest(TestCase):
                     "foo",
                     ("https://slank.ccnmtl.columbia.edu/"
                      "accounts/caslogin/?next=/")),
-                (True, "test_claim", ["test_claim"]))
+                (True, "test_claim",
+                 ["test_claim", "crs-3", "crs-1"]))
 
 
 class ValidateCas2TicketTest(TestCase):

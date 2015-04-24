@@ -70,6 +70,8 @@ def validate_cas2_ticket(ticketid, url):
             groups = [username]
             for g in dom.getElementsByTagName('cas:affiliation'):
                 groups.append(g.firstChild.data)
+            for g in dom.getElementsByTagName('cas:courses'):
+                groups.append(g.firstChild.data)
             return (True, username, groups)
 
         statsd.incr('djangowind.validate_cas2_ticket.invalid')
