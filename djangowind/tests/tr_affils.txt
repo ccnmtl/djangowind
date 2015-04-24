@@ -1,0 +1,15 @@
+<cas:serviceResponse xmlns:cas='http://www.yale.edu/tp/cas'>
+<cas:authenticationSuccess>
+<cas:user>test_claim</cas:user>
+<cas:attributes>
+<cas:attraStyle>Jasig</cas:attraStyle>
+<cas:uid>17</cas:uid>
+<cas:mail>testing_claim@example.com</cas:mail>
+<cas:created>1427489791</cas:created>
+<cas:language></cas:language>
+<cas:drupal_roles>authenticated user</cas:drupal_roles>
+<cas:courses>crs-3</cas:courses>
+<cas:courses>crs-1</cas:courses>
+</cas:attributes>
+</cas:authenticationSuccess>
+</cas:serviceResponse>
