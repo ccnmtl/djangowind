@@ -72,6 +72,25 @@ class ValidateWindTicketTest(TestCase):
                 (True, 'anders', ['anders']))
 
 
+class ValidateTRCasTicketTest(TestCase):
+    @httprettified
+    def test_validate_ticket_success(self):
+        HTTPretty.register_uri(
+            HTTPretty.GET,
+            ("https://cas.example.com/cas/serviceValidate?"
+             "ticket=foo&service=https%3A//"
+             "slank.ccnmtl.columbia.edu/accounts/caslogin/%3Fnext%3D/"),
+            body=tr_affils()
+        )
+        with self.settings(CAS_BASE="https://cas.example.com/"):
+            self.assertEqual(
+                validate_cas2_ticket(
+                    "foo",
+                    ("https://slank.ccnmtl.columbia.edu/"
+                     "accounts/caslogin/?next=/")),
+                (True, "test_claim", ["test_claim"]))
+
+
 class ValidateCas2TicketTest(TestCase):
     def test_no_ticket(self):
         self.assertEqual(
@@ -289,12 +308,20 @@ def saml_success_affils():
     return SAML_SUCCESS_1 + SAML_AFFILS + SAML_SUCCESS_2
 
 
-def jonah_affils():
+def open_affils(fn):
     return open(
         os.path.join(
             os.path.dirname(__file__),
-            "jonah_affils.txt")
+            fn)
     ).read()
+
+
+def jonah_affils():
+    return open_affils("jonah_affils.txt")
+
+
+def tr_affils():
+    return open_affils("tr_affils.txt")
 
 
 class ValidateSAMLTicketTest(TestCase):
