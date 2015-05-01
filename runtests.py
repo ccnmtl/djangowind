@@ -26,15 +26,11 @@ def main():
             'django.contrib.contenttypes',
             'django.contrib.sessions',
             'djangowind',
-            'django_nose',
             'django_jenkins',
         ),
         JENKINS_TEST_RUNNER = 'django_jenkins.runner.CITestSuiteRunner',
+        TEST_RUNNER='django.test.runner.DiscoverRunner',
 
-        NOSE_ARGS = [
-            '--with-coverage',
-            '--cover-package=djangowind',
-        ],
         TEST_PROJECT_APPS = (
             'djangowind',
         ),
@@ -64,7 +60,7 @@ def main():
     try:
         # required by Django 1.7 and later
         django.setup()
-    except:
+    except AttributeError:
         pass
 
     # Fire off the tests
