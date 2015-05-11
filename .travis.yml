@@ -15,3 +15,5 @@ install:
 script:
   - python runtests.py
   - flake8 djangowind
+notifications:
+  slack: ccnmtl:GizSNscLWJLldjQrffB8mwgm
