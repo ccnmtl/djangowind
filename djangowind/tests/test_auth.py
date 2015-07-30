@@ -210,6 +210,41 @@ class ValidateCas2TicketTest(TestCase):
                      "caslogin/?next=/")),
                 (True, 'anp8', ['anp8']))
 
+    @httprettified
+    def test_validate_tr_success(self):
+        """ for teachrecovery, we authenticate against a drupal
+        CAS server. The documented response looks like this:
+        https://gist.github.com/cravecode/6679b68d14a7250c8fe9
+        """
+        HTTPretty.register_uri(
+            HTTPretty.GET,
+            ("https://cas.columbia.edu/cas/serviceValidate?ticket=foo"
+             "&https%3A//slank.ccnmtl.columbia.edu/accounts/"
+             "caslogin/?next=/"),
+            body=TR_SUCCESS,
+        )
+        self.assertEqual(
+            validate_cas2_ticket(
+                "foo",
+                "https://slank.ccnmtl.columbia.edu/accounts/caslogin/?next=/"),
+            (True, 'test_claim', ['test_claim', u'crs-3', u'crs-1']))
+
+TR_SUCCESS = """<cas:serviceResponse xmlns:cas='http://www.yale.edu/tp/cas'>
+<cas:authenticationSuccess>
+<cas:user>test_claim</cas:user>
+<cas:attributes>
+<cas:attraStyle>Jasig</cas:attraStyle>
+<cas:uid>17</cas:uid>
+<cas:mail>testing_claim@example.com</cas:mail>
+<cas:created>1427489791</cas:created>
+<cas:language></cas:language>
+<cas:drupal_roles>authenticated user</cas:drupal_roles>
+<cas:courses>crs-3</cas:courses>
+<cas:courses>crs-1</cas:courses>
+</cas:attributes>
+</cas:authenticationSuccess>
+</cas:serviceResponse>"""
+
 SAML_FAIL = (
     """<?xml version="1.0" encoding="UTF-8"?>"""
     """<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/"""
