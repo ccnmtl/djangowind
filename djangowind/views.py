@@ -130,7 +130,6 @@ def windlogin(request, redirect_field_name=REDIRECT_FIELD_NAME):
             redirect_to = request.REQUEST.get(redirect_field_name, '')
             # Light security check -- make sure redirect_to isn't garbage.
             if not redirect_to:
-                from django.conf import settings
                 redirect_to = settings.LOGIN_REDIRECT_URL
             from django.contrib.auth import login
             login(request, u)
@@ -151,26 +150,31 @@ def windlogin(request, redirect_field_name=REDIRECT_FIELD_NAME):
 @csrf_exempt
 def caslogin(request, redirect_field_name=REDIRECT_FIELD_NAME):
     """ validates the WIND ticket and logs the user in """
-    if 'ticketid' in request.GET:
+    ticketid_field_name = settings.get('CAS_TICKETID_FIELD_NAME',
+                                       'ticketid')
+    if ticketid_field_name in request.GET:
         statsd.incr('djangowind.caslogin.called')
         protocol = "https"
         if not request.is_secure():
             protocol = "https"
+
+        # if we didn't have one stashed in the session
+        # the best guess is that it was for django admin
+        # so, this is a bit magic, but I don't have any better
+        # ideas right now
+        default_next = settings.get(
+            'CAS_DEFAULT_NEXT',
+            "/admin/&this_is_the_login_form=1")
         url = request.session.get(
             'cas_service_url',
-            # if we didn't have one stashed in the session
-            # the best guess is that it was for django admin
-            # so, this is a bit magic, but I don't have any better
-            # ideas right now
             protocol + "://" + request.get_host() + "/accounts/caslogin/"
-            + "?next=/admin/&this_is_the_login_form=1"
+            + "?next=" + default_next
         )
-        u = authenticate(ticket=request.GET['ticketid'], url=url)
+        u = authenticate(ticket=request.GET[ticketid_field_name], url=url)
         if u is not None:
             redirect_to = request.REQUEST.get(redirect_field_name, '')
             # Light security check -- make sure redirect_to isn't garbage.
             if not redirect_to:
-                from django.conf import settings
                 redirect_to = settings.LOGIN_REDIRECT_URL
             from django.contrib.auth import login
             login(request, u)
