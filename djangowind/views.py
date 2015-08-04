@@ -150,8 +150,8 @@ def windlogin(request, redirect_field_name=REDIRECT_FIELD_NAME):
 @csrf_exempt
 def caslogin(request, redirect_field_name=REDIRECT_FIELD_NAME):
     """ validates the WIND ticket and logs the user in """
-    ticketid_field_name = settings.get('CAS_TICKETID_FIELD_NAME',
-                                       'ticketid')
+    ticketid_field_name = getattr(settings, 'CAS_TICKETID_FIELD_NAME',
+                                  'ticketid')
     if ticketid_field_name in request.GET:
         statsd.incr('djangowind.caslogin.called')
         protocol = "https"
@@ -162,9 +162,8 @@ def caslogin(request, redirect_field_name=REDIRECT_FIELD_NAME):
         # the best guess is that it was for django admin
         # so, this is a bit magic, but I don't have any better
         # ideas right now
-        default_next = settings.get(
-            'CAS_DEFAULT_NEXT',
-            "/admin/&this_is_the_login_form=1")
+        default_next = getattr(settings, 'CAS_DEFAULT_NEXT',
+                               "/admin/&this_is_the_login_form=1")
         url = request.session.get(
             'cas_service_url',
             protocol + "://" + request.get_host() + "/accounts/caslogin/"
