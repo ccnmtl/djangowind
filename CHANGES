@@ -1,3 +1,9 @@
+0.14.0 (2015-08-04)
+===================
+
+* add support for different CAS settings (to integrate with a Drupal
+  CAS server)
+
 0.13.3 (2015-04-17)
 ===================
 * Add csrf_exempt() to djangowind's external login views.
