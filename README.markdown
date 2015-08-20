@@ -28,14 +28,14 @@ the `ModelBackend` entry (be sure to leave it as a tuple or list).
 `WIND_BASE` and `WIND_SERVICE` aren't strictly necessary as those are the
 defaults in the code.
 
-Djangowind uses the `django.core.context_processors.request` template
+Djangowind uses the `django.template.context_processors.request` template
 context processor, so that needs to be enabled. So add the following
 to your settings as well:
 
     TEMPLATE_CONTEXT_PROCESSORS = (
-        'django.core.context_processors.auth',
-        'django.core.context_processors.debug',
-        'django.core.context_processors.request',
+        'django.contrib.auth.context_processors.auth',
+        'django.template.context_processors.debug',
+        'django.template.context_processors.request',
     )
 
 Now, in `urls.py`, add the mapping: 
