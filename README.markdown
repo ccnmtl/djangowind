@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/ccnmtl/djangowind.svg?branch=master)](https://travis-ci.org/ccnmtl/djangowind)
+[![Documentation Status](https://readthedocs.org/projects/djangowind/badge/?version=latest)](https://djangowind.readthedocs.org/en/latest/?badge=latest)
 
 ## Basic Usage
 
