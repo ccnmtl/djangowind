@@ -4,3 +4,4 @@ build
 reports
 ve
 *.pyc
+docs/_build/
