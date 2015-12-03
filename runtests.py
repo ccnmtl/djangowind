@@ -38,9 +38,6 @@ def main():
         ROOT_URLCONF = [],
         SOUTH_TESTS_MIGRATE=False,
 
-        JENKINS_TASKS = (
-            'django_jenkins.tasks.with_coverage',
-        ),
         PROJECT_APPS = [
             'djangowind',
         ],
@@ -64,7 +61,7 @@ def main():
         pass
 
     # Fire off the tests
-    call_command('jenkins')
+    call_command('jenkins', '--enable-coverage')
 
 if __name__ == '__main__':
     main()
