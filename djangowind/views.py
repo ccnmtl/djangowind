@@ -11,9 +11,9 @@ from django.contrib.sites.models import Site
 from django.contrib.auth.forms import AuthenticationForm
 from django.template import RequestContext
 try:
-    from django.contrib.sites.models import RequestSite
-except ImportError:
     from django.contrib.sites.requests import RequestSite
+except ImportError:
+    from django.contrib.sites.models import RequestSite
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.core.urlresolvers import reverse
 
