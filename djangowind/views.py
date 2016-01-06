@@ -32,7 +32,9 @@ SESSION_KEY = 'edu.columbia.wind'
 def login(request, template_name='registration/login.html',
           redirect_field_name=REDIRECT_FIELD_NAME):
     "Displays the login form and handles the login action."
-    redirect_to = request.REQUEST.get(redirect_field_name, '')
+    redirect_to = request.POST.get(
+        redirect_field_name,
+        request.GET.get(redirect_field_name, ''))
 
     if request.method == "POST":
         statsd.incr('djangowind.login.called')
@@ -130,7 +132,7 @@ def windlogin(request, redirect_field_name=REDIRECT_FIELD_NAME):
         statsd.incr('djangowind.windlogin.called')
         u = authenticate(ticket=request.GET['ticketid'])
         if u is not None:
-            redirect_to = request.REQUEST.get(redirect_field_name, '')
+            redirect_to = request.GET.get(redirect_field_name, '')
             # Light security check -- make sure redirect_to isn't garbage.
             if not redirect_to:
                 redirect_to = settings.LOGIN_REDIRECT_URL
@@ -174,7 +176,7 @@ def caslogin(request, redirect_field_name=REDIRECT_FIELD_NAME):
         )
         u = authenticate(ticket=request.GET[ticketid_field_name], url=url)
         if u is not None:
-            redirect_to = request.REQUEST.get(redirect_field_name, '')
+            redirect_to = request.GET.get(redirect_field_name, '')
             # Light security check -- make sure redirect_to isn't garbage.
             if not redirect_to:
                 redirect_to = settings.LOGIN_REDIRECT_URL
