@@ -10,10 +10,14 @@ env:
 install:
   - pip install -q $DJANGO --use-mirrors
   - pip install -q -r test_reqs.txt --use-mirrors
+  - pip install coveralls
 
 # command to run tests
 script:
   - python runtests.py
   - flake8 djangowind
+  - coverage run --source=djangowind runtests.py
+after_success:
+  - coveralls
 notifications:
   slack: ccnmtl:GizSNscLWJLldjQrffB8mwgm
