@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/ccnmtl/djangowind.svg?branch=master)](https://travis-ci.org/ccnmtl/djangowind)
+[![Coverage Status](https://coveralls.io/repos/github/ccnmtl/djangowind/badge.svg?branch=master)](https://coveralls.io/github/ccnmtl/djangowind?branch=master)
 [![Documentation Status](https://readthedocs.org/projects/djangowind/badge/?version=latest)](https://djangowind.readthedocs.org/en/latest/?badge=latest)
 
 ## Basic Usage
