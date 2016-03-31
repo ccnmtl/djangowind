@@ -1,5 +1,5 @@
 coverage==4.0.3
-flake8==2.4.0
+flake8==2.5.4
 httpretty==0.8.8
 django-jenkins==0.18.1
 pep8==1.5.7
