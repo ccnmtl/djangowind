@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from django.http import HttpResponseRedirect, HttpResponseForbidden
 from django.shortcuts import render_to_response
 

@@ -61,7 +61,7 @@ def main():
         pass
 
     # Fire off the tests
-    call_command('jenkins', '--enable-coverage')
+    call_command('jenkins')
 
 if __name__ == '__main__':
     main()

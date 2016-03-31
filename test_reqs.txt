@@ -1,8 +1,9 @@
 coverage==4.0.3
+mock==2.0.0
 flake8==2.5.4
-httpretty==0.8.14
 django-jenkins==0.18.1
 pep8==1.5.7
 pyflakes==1.1.0
 statsd==3.2.1
 django-statsd-mozilla==0.3.16
+ipdb==0.9.3

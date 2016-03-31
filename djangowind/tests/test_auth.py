@@ -1,5 +1,16 @@
+from __future__ import unicode_literals
+
+try:
+    from http.client import HTTPResponse
+except ImportError:
+    from httplib import HTTPResponse
+
+try:
+    from unittest.mock import Mock, patch
+except ImportError:
+    from mock import Mock, patch
+
 from django.test import TestCase
-from httpretty import HTTPretty, httprettified
 from djangowind.auth import validate_wind_ticket, WindAuthBackend
 from djangowind.auth import validate_cas2_ticket, CAS2AuthBackend
 from djangowind.auth import validate_saml_ticket, SAMLAuthBackend
@@ -9,79 +20,78 @@ from django.contrib.auth.models import User, Group
 import os.path
 
 
+@patch('djangowind.auth.urlopen')
 class ValidateWindTicketTest(TestCase):
-    def test_no_ticket(self):
+    def setUp(self):
+        self.response = Mock(spec=HTTPResponse)
+
+    def test_no_ticket(self, mock_urlopen):
         self.assertEqual(
             validate_wind_ticket(""),
             (False, 'no ticketid', ''))
 
-    @httprettified
-    def test_validate_ticket_success(self):
-        HTTPretty.register_uri(
-            HTTPretty.GET,
-            "https://wind.columbia.edu/validate?ticket=foo",
-            body="yes\nanders"
-        )
+    def test_validate_ticket_success(self, mock_urlopen):
+        self.response.read.return_value = 'yes\nanders'
+        mock_urlopen.return_value = self.response
+
         self.assertEqual(
             validate_wind_ticket("foo"),
             (True, 'anders', ['anders']))
+        mock_urlopen.assert_called_with(
+            'https://wind.columbia.edu/validate?ticketid=foo')
 
-    @httprettified
-    def test_validate_ticket_success_with_groups(self):
-        HTTPretty.register_uri(
-            HTTPretty.GET,
-            "https://wind.columbia.edu/validate?ticket=foo",
-            body="yes\nanders\ngroup1\ngroup2"
-        )
+    def test_validate_ticket_success_with_groups(self, mock_urlopen):
+        self.response.read.return_value = "yes\nanders\ngroup1\ngroup2"
+        mock_urlopen.return_value = self.response
+
         self.assertEqual(
             validate_wind_ticket("foo"),
             (True, 'anders', ['anders', 'group1', 'group2']))
+        mock_urlopen.assert_called_with(
+            'https://wind.columbia.edu/validate?ticketid=foo')
 
-    @httprettified
-    def test_validate_ticket_fail(self):
-        HTTPretty.register_uri(
-            HTTPretty.GET,
-            "https://wind.columbia.edu/validate?ticket=foo",
-            body="no\nanders"
-        )
+    def test_validate_ticket_fail(self, mock_urlopen):
+        self.response.read.return_value = 'no\nanders'
+        mock_urlopen.return_value = self.response
+
         self.assertEqual(
             validate_wind_ticket("foo"),
             (False, "The ticket was already used or was invalid.", []))
+        mock_urlopen.assert_called_with(
+            'https://wind.columbia.edu/validate?ticketid=foo')
 
-    @httprettified
-    def test_validate_ticket_invalid_response(self):
-        HTTPretty.register_uri(
-            HTTPretty.GET,
-            "https://wind.columbia.edu/validate?ticket=foo",
-            body="holy crap! I'm not a valid WIND response!"
-        )
+    def test_validate_ticket_invalid_response(self, mock_urlopen):
+        self.response.read.return_value = \
+            "holy crap! I'm not a valid WIND response!"
+        mock_urlopen.return_value = self.response
+
         self.assertEqual(
             validate_wind_ticket("foo"),
             (False, "WIND did not return a valid response.", []))
+        mock_urlopen.assert_called_with(
+            'https://wind.columbia.edu/validate?ticketid=foo')
 
-    @httprettified
-    def test_validate_ticket_alternate_wind_base(self):
-        HTTPretty.register_uri(
-            HTTPretty.GET,
-            "https://foo.example.com/validate?ticket=foo",
-            body="yes\nanders"
-        )
+    def test_validate_ticket_alternate_wind_base(self, mock_urlopen):
+        self.response.read.return_value = 'yes\nanders'
+        mock_urlopen.return_value = self.response
+
         with self.settings(WIND_BASE="https://foo.example.com/"):
             self.assertEqual(
                 validate_wind_ticket("foo"),
                 (True, 'anders', ['anders']))
+            mock_urlopen.assert_called_with(
+                'https://foo.example.com/validate?ticketid=foo')
 
 
+@patch('djangowind.auth.urlopen')
 class ValidateTRCasTicketTest(TestCase):
-    @httprettified
-    def test_validate_ticket_success(self):
-        HTTPretty.register_uri(
-            HTTPretty.GET,
-            ("https://cas.example.com/cas/serviceValidate?"
-             "ticket=foo&service=https%3A//"
-             "slank.ccnmtl.columbia.edu/accounts/caslogin/%3Fnext%3D/"),
-            body=tr_affils()
-        )
+    def setUp(self):
+        self.response = Mock(spec=HTTPResponse)
+
+    def test_validate_ticket_success(self, mock_urlopen):
+        self.response.read.return_value = tr_affils()
+        mock_urlopen.return_value = self.response
+
         with self.settings(CAS_BASE="https://cas.example.com/"):
             self.assertEqual(
                 validate_cas2_ticket(
@@ -90,118 +100,117 @@ class ValidateTRCasTicketTest(TestCase):
                      "accounts/caslogin/?next=/")),
                 (True, "test_claim",
                  ["test_claim", "crs-3", "crs-1"]))
+            mock_urlopen.assert_called_with(
+                "https://cas.example.com/cas/serviceValidate?"
+                "ticket=foo&service=https%3A//"
+                "slank.ccnmtl.columbia.edu/accounts/caslogin/%3Fnext%3D/")
 
 
+@patch('djangowind.auth.urlopen')
 class ValidateCas2TicketTest(TestCase):
-    def test_no_ticket(self):
+    def setUp(self):
+        self.response = Mock(spec=HTTPResponse)
+
+    def test_no_ticket(self, mock_urlopen):
         self.assertEqual(
             validate_cas2_ticket("", ""),
             (False, 'no ticketid', ''))
 
-    @httprettified
-    def test_validate_ticket_success(self):
-        HTTPretty.register_uri(
-            HTTPretty.GET,
-            ("https://cas.columbia.edu/cas/serviceValidate?ticket=foo"
-             "&https%3A//slank.ccnmtl.columbia.edu/accounts/"
-             "caslogin/?next=/"),
-            body=(
-                "\n\n\n<cas:serviceResponse xmlns:cas='http://www."
-                "yale.edu/tp/cas'>\n\t<cas:authenticationSuccess>\n"
-                "\t\t<cas:user>anp8</cas:user>\n"
-                "\n"
-                "\n"
-                "\t</cas:authenticationSuccess>\n"
-                "</cas:serviceResponse>\n")
-        )
+    def test_validate_ticket_success(self, mock_urlopen):
+        self.response.read.return_value = (
+            "\n\n\n<cas:serviceResponse xmlns:cas='http://www."
+            "yale.edu/tp/cas'>\n\t<cas:authenticationSuccess>\n"
+            "\t\t<cas:user>anp8</cas:user>\n"
+            "\n"
+            "\n"
+            "\t</cas:authenticationSuccess>\n"
+            "</cas:serviceResponse>\n")
+        mock_urlopen.return_value = self.response
+
         self.assertEqual(
             validate_cas2_ticket(
                 "foo",
                 "https://slank.ccnmtl.columbia.edu/accounts/caslogin/?next=/"),
             (True, 'anp8', ['anp8']))
+        mock_urlopen.assert_called_with(
+            "https://cas.columbia.edu/cas/serviceValidate?ticket=foo"
+            "&service=https%3A//slank.ccnmtl.columbia.edu/accounts/"
+            "caslogin/%3Fnext%3D/")
 
-    @httprettified
-    def test_validate_ticket_success_with_groups(self):
-        HTTPretty.register_uri(
-            HTTPretty.GET,
-            ("https://cas.columbia.edu/cas/serviceValidate?ticket=foo"
-             "&https%3A//slank.ccnmtl.columbia.edu/accounts/"
-             "caslogin/?next=/"),
-            body=(
-                "\n\n\n<cas:serviceResponse xmlns:cas='http://www."
-                "yale.edu/tp/cas'>\n\t<cas:authenticationSuccess>\n"
-                "\t\t<cas:user>anp8</cas:user>\n"
-                "\t\t<cas:attributes>\n"
-                "\t\t\t<cas:affiliation>group1</cas:affiliation>\n"
-                "\t\t\t<cas:affiliation>group2</cas:affiliation>\n"
-                "\t\t</cas:attributes>\n"
-                "\n"
-                "\n"
-                "\t</cas:authenticationSuccess>\n"
-                "</cas:serviceResponse>\n")
-        )
+    def test_validate_ticket_success_with_groups(self, mock_urlopen):
+        self.response.read.return_value = (
+            "\n\n\n<cas:serviceResponse xmlns:cas='http://www."
+            "yale.edu/tp/cas'>\n\t<cas:authenticationSuccess>\n"
+            "\t\t<cas:user>anp8</cas:user>\n"
+            "\t\t<cas:attributes>\n"
+            "\t\t\t<cas:affiliation>group1</cas:affiliation>\n"
+            "\t\t\t<cas:affiliation>group2</cas:affiliation>\n"
+            "\t\t</cas:attributes>\n"
+            "\n"
+            "\n"
+            "\t</cas:authenticationSuccess>\n"
+            "</cas:serviceResponse>\n")
+        mock_urlopen.return_value = self.response
 
         self.assertEqual(
             validate_cas2_ticket(
                 "foo",
                 "https://slank.ccnmtl.columbia.edu/accounts/caslogin/?next=/"),
             (True, 'anp8', ['anp8', 'group1', 'group2']))
+        mock_urlopen.assert_called_with(
+            "https://cas.columbia.edu/cas/serviceValidate?ticket=foo"
+            "&service=https%3A//slank.ccnmtl.columbia.edu/accounts/"
+            "caslogin/%3Fnext%3D/")
 
-    @httprettified
-    def test_validate_ticket_fail(self):
-        HTTPretty.register_uri(
-            HTTPretty.GET,
-            ("https://cas.columbia.edu/cas/serviceValidate?"
-             "ticket=foo&https%3A//slank.ccnmtl.columbia.edu/"
-             "accounts/caslogin/?next=/"),
-            body=(
-                "\n\n\n<cas:serviceResponse xmlns:cas='http"
-                "://www.yale.edu/tp/cas'>\n\t<cas:authenticationFailure "
-                "code='INVALID_SERVICE'>\n\t\tticket &#039;ST-181952-OK0"
-                "qr5suLueHccqPfgIT-idmcasprod2&#039; does not match supp"
-                "lied service.  The original service was &#039;https://"
-                "slank.ccnmtl.columbia.edu/accounts/caslogin/?next=/&#039;"
-                "and the supplied service was &#039;https://slank.ccnmtl."
-                "columbia.edu/accounts/caslogin/&#039;.\n\t</cas:authenti"
-                "cationFailure>\n</cas:serviceResponse>")
-        )
+    def test_validate_ticket_fail(self, mock_urlopen):
+        self.response.read.return_value = (
+            "\n\n\n<cas:serviceResponse xmlns:cas='http"
+            "://www.yale.edu/tp/cas'>\n\t<cas:authenticationFailure "
+            "code='INVALID_SERVICE'>\n\t\tticket &#039;ST-181952-OK0"
+            "qr5suLueHccqPfgIT-idmcasprod2&#039; does not match supp"
+            "lied service.  The original service was &#039;https://"
+            "slank.ccnmtl.columbia.edu/accounts/caslogin/?next=/&#039;"
+            "and the supplied service was &#039;https://slank.ccnmtl."
+            "columbia.edu/accounts/caslogin/&#039;.\n\t</cas:authenti"
+            "cationFailure>\n</cas:serviceResponse>")
+        mock_urlopen.return_value = self.response
+
         self.assertEqual(
             validate_cas2_ticket(
                 "foo",
                 "https://slank.ccnmtl.columbia.edu/accounts/caslogin/?next=/"),
             (False, "The ticket was already used or was invalid.", []))
+        mock_urlopen.assert_called_with(
+            "https://cas.columbia.edu/cas/serviceValidate?ticket=foo"
+            "&service=https%3A//slank.ccnmtl.columbia.edu/accounts/"
+            "caslogin/%3Fnext%3D/")
 
-    @httprettified
-    def test_validate_ticket_invalid_response(self):
-        HTTPretty.register_uri(
-            HTTPretty.GET,
-            ("https://cas.columbia.edu/cas/serviceValidate?"
-             "ticket=foo&https%3A//slank.ccnmtl.columbia.edu/"
-             "accounts/caslogin/?next=/"),
-            body="holy crap! I'm not a valid CAS response!"
-        )
+    def test_validate_ticket_invalid_response(self, mock_urlopen):
+        self.response.read.return_value = \
+            "holy crap! I'm not a valid CAS response!"
+        mock_urlopen.return_value = self.response
+
         self.assertEqual(
             validate_cas2_ticket(
                 "foo",
                 "https://slank.ccnmtl.columbia.edu/accounts/caslogin/?next=/"),
             (False, "CAS did not return a valid response.", []))
+        mock_urlopen.assert_called_with(
+            "https://cas.columbia.edu/cas/serviceValidate?ticket=foo"
+            "&service=https%3A//slank.ccnmtl.columbia.edu/accounts/"
+            "caslogin/%3Fnext%3D/")
 
-    @httprettified
-    def test_validate_ticket_alternate_case_base(self):
-        HTTPretty.register_uri(
-            HTTPretty.GET,
-            ("https://cas.example.com/cas/serviceValidate?ticket=foo"
-             "&https%3A//slank.ccnmtl.columbia.edu/accounts/"
-             "caslogin/?next=/"),
-            body=(
-                "\n\n\n<cas:serviceResponse xmlns:cas='http://www."
-                "yale.edu/tp/cas'>\n\t<cas:authenticationSuccess>\n"
-                "\t\t<cas:user>anp8</cas:user>\n"
-                "\n"
-                "\n"
-                "\t</cas:authenticationSuccess>\n"
-                "</cas:serviceResponse>\n")
-        )
+    def test_validate_ticket_alternate_case_base(self, mock_urlopen):
+        self.response.read.return_value = (
+            "\n\n\n<cas:serviceResponse xmlns:cas='http://www."
+            "yale.edu/tp/cas'>\n\t<cas:authenticationSuccess>\n"
+            "\t\t<cas:user>anp8</cas:user>\n"
+            "\n"
+            "\n"
+            "\t</cas:authenticationSuccess>\n"
+            "</cas:serviceResponse>\n")
+        mock_urlopen.return_value = self.response
+
         with self.settings(CAS_BASE="https://cas.example.com/"):
             self.assertEqual(
                 validate_cas2_ticket(
@@ -209,25 +218,28 @@ class ValidateCas2TicketTest(TestCase):
                     ("https://slank.ccnmtl.columbia.edu/accounts/"
                      "caslogin/?next=/")),
                 (True, 'anp8', ['anp8']))
+            mock_urlopen.assert_called_with(
+                "https://cas.example.com/cas/serviceValidate?ticket=foo"
+                "&service=https%3A//slank.ccnmtl.columbia.edu/accounts/"
+                "caslogin/%3Fnext%3D/")
 
-    @httprettified
-    def test_validate_tr_success(self):
+    def test_validate_tr_success(self, mock_urlopen):
         """ for teachrecovery, we authenticate against a drupal
         CAS server. The documented response looks like this:
         https://gist.github.com/cravecode/6679b68d14a7250c8fe9
         """
-        HTTPretty.register_uri(
-            HTTPretty.GET,
-            ("https://cas.columbia.edu/cas/serviceValidate?ticket=foo"
-             "&https%3A//slank.ccnmtl.columbia.edu/accounts/"
-             "caslogin/?next=/"),
-            body=TR_SUCCESS,
-        )
+        self.response.read.return_value = TR_SUCCESS
+        mock_urlopen.return_value = self.response
+
         self.assertEqual(
             validate_cas2_ticket(
                 "foo",
                 "https://slank.ccnmtl.columbia.edu/accounts/caslogin/?next=/"),
             (True, 'test_claim', ['test_claim', u'crs-3', u'crs-1']))
+        mock_urlopen.assert_called_with(
+            "https://cas.columbia.edu/cas/serviceValidate?ticket=foo"
+            "&service=https%3A//slank.ccnmtl.columbia.edu/accounts/"
+            "caslogin/%3Fnext%3D/")
 
 TR_SUCCESS = """<cas:serviceResponse xmlns:cas='http://www.yale.edu/tp/cas'>
 <cas:authenticationSuccess>
@@ -360,35 +372,29 @@ def tr_affils():
     return open_affils("tr_affils.txt")
 
 
+@patch('djangowind.auth.urlopen')
 class ValidateSAMLTicketTest(TestCase):
-    def test_no_ticket(self):
+    def setUp(self):
+        self.response = Mock(spec=HTTPResponse)
+
+    def test_no_ticket(self, mock_urlopen):
         self.assertEqual(
             validate_saml_ticket("", ""),
             (False, 'no ticketid', ''))
 
-    @httprettified
-    def test_validate_ticket_success(self):
-        HTTPretty.register_uri(
-            HTTPretty.POST,
-            ("https://cas.columbia.edu/cas/samlValidate?"
-             "TARGET=https%3A%2F%2Fslank.ccnmtl.columbia.edu"
-             "%2Faccounts%2Fcaslogin%2F%3Fnext%3D%2F"),
-            body=saml_success_no_affils())
+    def test_validate_ticket_success(self, mock_urlopen):
+        self.response.read.return_value = saml_success_no_affils()
+        mock_urlopen.return_value = self.response
+
         self.assertEqual(
             validate_saml_ticket(
                 "foo",
                 "https://slank.ccnmtl.columbia.edu/accounts/caslogin/?next=/"),
             (True, 'anp8', ['anp8']))
 
-    @httprettified
-    def test_validate_ticket_success_with_groups(self):
-        HTTPretty.register_uri(
-            HTTPretty.POST,
-            ("https://cas.columbia.edu/cas/samlValidate?"
-             "TARGET=https%3A%2F%2Fslank.ccnmtl.columbia.edu"
-             "%2Faccounts%2Fcaslogin%2F%3Fnext%3D%2F"),
-            body=saml_success_affils()
-        )
+    def test_validate_ticket_success_with_groups(self, mock_urlopen):
+        self.response.read.return_value = saml_success_affils()
+        mock_urlopen.return_value = self.response
 
         self.assertEqual(
             validate_saml_ticket(
@@ -403,43 +409,31 @@ class ValidateSAMLTicketTest(TestCase):
               'tlc-pt.cunix.local:columbia.edu',
               'tlcxml.cunix.local:columbia.edu']))
 
-    @httprettified
-    def test_validate_ticket_fail(self):
-        HTTPretty.register_uri(
-            HTTPretty.POST,
-            ("https://cas.columbia.edu/cas/samlValidate?"
-             "TARGET=https%3A%2F%2Fslank.ccnmtl.columbia.edu"
-             "%2Faccounts%2Fcaslogin%2F%3Fnext%3D%2F"),
-            body=SAML_FAIL)
+    def test_validate_ticket_fail(self, mock_urlopen):
+        self.response.read.return_value = SAML_FAIL
+        mock_urlopen.return_value = self.response
+
         self.assertEqual(
             validate_saml_ticket(
                 "foo",
                 "https://slank.ccnmtl.columbia.edu/accounts/caslogin/?next=/"),
             (False, "CAS/SAML Validation Failed", []))
 
-    @httprettified
-    def test_validate_ticket_invalid_response(self):
-        HTTPretty.register_uri(
-            HTTPretty.POST,
-            ("https://cas.columbia.edu/cas/samlValidate?"
-             "TARGET=https%3A%2F%2Fslank.ccnmtl.columbia.edu"
-             "%2Faccounts%2Fcaslogin%2F%3Fnext%3D%2F"),
-            body="holy crap! I'm not a valid CAS response!"
-        )
+    def test_validate_ticket_invalid_response(self, mock_urlopen):
+        self.response.read.return_value = \
+            "holy crap! I'm not a valid CAS response!"
+        mock_urlopen.return_value = self.response
+
         self.assertEqual(
             validate_saml_ticket(
                 "foo",
                 "https://slank.ccnmtl.columbia.edu/accounts/caslogin/?next=/"),
             (False, "CAS did not return a valid response.", []))
 
-    @httprettified
-    def test_validate_ticket_alternate_cas_base(self):
-        HTTPretty.register_uri(
-            HTTPretty.POST,
-            ("https://cas.example.com/cas/samlValidate?"
-             "TARGET=https%3A%2F%2Fslank.ccnmtl.columbia.edu"
-             "%2Faccounts%2Fcaslogin%2F%3Fnext%3D%2F"),
-            body=saml_success_no_affils())
+    def test_validate_ticket_alternate_cas_base(self, mock_urlopen):
+        self.response.read.return_value = saml_success_no_affils()
+        mock_urlopen.return_value = self.response
+
         with self.settings(CAS_BASE="https://cas.example.com/"):
             self.assertEqual(
                 validate_saml_ticket(
@@ -448,15 +442,10 @@ class ValidateSAMLTicketTest(TestCase):
                      "caslogin/?next=/")),
                 (True, 'anp8', ['anp8']))
 
-    @httprettified
-    def test_validate_ticket_with_jonah_affils(self):
-        HTTPretty.register_uri(
-            HTTPretty.POST,
-            ("https://cas.columbia.edu/cas/samlValidate?"
-             "TARGET=https%3A%2F%2Fslank.ccnmtl.columbia.edu"
-             "%2Faccounts%2Fcaslogin%2F%3Fnext%3D%2F"),
-            body=jonah_affils()
-        )
+    def test_validate_ticket_with_jonah_affils(self, mock_urlopen):
+        self.response.read.return_value = jonah_affils()
+        mock_urlopen.return_value = self.response
+
         self.assertEqual(
             validate_saml_ticket(
                 "foo",
@@ -500,18 +489,18 @@ class ValidateSAMLTicketTest(TestCase):
               't3.y2009.s001.cg8200.soci.st.course:columbia.edu']))
 
 
+@patch('djangowind.auth.urlopen')
 class WindAuthBackendTest(TestCase):
-    def test_authenticate_no_ticket(self):
+    def setUp(self):
+        self.response = Mock(spec=HTTPResponse)
+
+    def test_authenticate_no_ticket(self, mock_urlopen):
         w = WindAuthBackend()
         self.assertEqual(w.authenticate(None), None)
 
-    @httprettified
-    def test_authenticate_success(self):
-        HTTPretty.register_uri(
-            HTTPretty.GET,
-            "https://wind.columbia.edu/validate?ticket=foo",
-            body="yes\nanders"
-        )
+    def test_authenticate_success(self, mock_urlopen):
+        self.response.read.return_value = 'yes\nanders'
+        mock_urlopen.return_value = self.response
         w = WindAuthBackend()
         r = w.authenticate("foo")
         self.assertEqual(r.username, "anders")
@@ -523,14 +512,13 @@ class WindAuthBackendTest(TestCase):
             r = w.authenticate("foo")
             self.assertEqual(r.username, "anders")
             self.assertFalse(r.has_usable_password())
+            mock_urlopen.assert_called_with(
+                'https://wind.columbia.edu/validate?ticketid=foo')
 
-    @httprettified
-    def test_authenticate_success_existing_user(self):
-        HTTPretty.register_uri(
-            HTTPretty.GET,
-            "https://wind.columbia.edu/validate?ticket=foo",
-            body="yes\nanders"
-        )
+    def test_authenticate_success_existing_user(self, mock_urlopen):
+        self.response.read.return_value = 'yes\nanders'
+        mock_urlopen.return_value = self.response
+
         u = User.objects.create(username="anders")
         u.set_password("something other than unusable")
         u.save()
@@ -538,33 +526,33 @@ class WindAuthBackendTest(TestCase):
         r = w.authenticate("foo")
         self.assertEqual(r.username, "anders")
         self.assertNotEqual(r.password, "!")
+        mock_urlopen.assert_called_with(
+            'https://wind.columbia.edu/validate?ticketid=foo')
 
-    @httprettified
-    def test_authenticate_failure(self):
-        HTTPretty.register_uri(
-            HTTPretty.GET,
-            "https://wind.columbia.edu/validate?ticket=foo",
-            body="no\nanders"
-        )
+    def test_authenticate_failure(self, mock_urlopen):
+        self.response.read.return_value = 'no\nanders'
+        mock_urlopen.return_value = self.response
+
         w = WindAuthBackend()
         r = w.authenticate("foo")
         self.assertEqual(r, None)
+        mock_urlopen.assert_called_with(
+            'https://wind.columbia.edu/validate?ticketid=foo')
 
-    @httprettified
-    def test_authenticate_success_with_mappers(self):
-        HTTPretty.register_uri(
-            HTTPretty.GET,
-            "https://wind.columbia.edu/validate?ticket=foo",
-            body="yes\nanders"
-        )
+    def test_authenticate_success_with_mappers(self, mock_urlopen):
+        self.response.read.return_value = 'yes\nanders'
+        mock_urlopen.return_value = self.response
+
         with self.settings(
                 WIND_AFFIL_HANDLERS=['djangowind.auth.AffilGroupMapper']):
             w = WindAuthBackend()
             r = w.authenticate("foo")
             self.assertEqual(r.username, "anders")
             self.assertFalse(r.has_usable_password())
+            mock_urlopen.assert_called_with(
+                'https://wind.columbia.edu/validate?ticketid=foo')
 
-    def test_get_user(self):
+    def test_get_user(self, mock_urlopen):
         w = WindAuthBackend()
         # no pre-existing user
         r = w.get_user(1)
@@ -575,27 +563,25 @@ class WindAuthBackendTest(TestCase):
         self.assertEqual(r, u)
 
 
+@patch('djangowind.auth.urlopen')
 class CAS2AuthBackendTest(TestCase):
-    def test_authenticate_no_ticket(self):
+    def setUp(self):
+        self.response = Mock(spec=HTTPResponse)
+
+    def test_authenticate_no_ticket(self, mock_urlopen):
         w = CAS2AuthBackend()
         self.assertEqual(w.authenticate(None), None)
 
-    @httprettified
-    def test_authenticate_success(self):
-        HTTPretty.register_uri(
-            HTTPretty.GET,
-            ("https://cas.columbia.edu/cas/serviceValidate?ticket=foo"
-             "&https%3A//slank.ccnmtl.columbia.edu/accounts/"
-             "caslogin/?next=/"),
-            body=(
-                "\n\n\n<cas:serviceResponse xmlns:cas='http://www."
-                "yale.edu/tp/cas'>\n\t<cas:authenticationSuccess>\n"
-                "\t\t<cas:user>anp8</cas:user>\n"
-                "\n"
-                "\n"
-                "\t</cas:authenticationSuccess>\n"
-                "</cas:serviceResponse>\n")
-        )
+    def test_authenticate_success(self, mock_urlopen):
+        self.response.read.return_value = (
+            "\n\n\n<cas:serviceResponse xmlns:cas='http://www."
+            "yale.edu/tp/cas'>\n\t<cas:authenticationSuccess>\n"
+            "\t\t<cas:user>anp8</cas:user>\n"
+            "\n"
+            "\n"
+            "\t</cas:authenticationSuccess>\n"
+            "</cas:serviceResponse>\n")
+        mock_urlopen.return_value = self.response
 
         w = CAS2AuthBackend()
         r = w.authenticate(
@@ -604,6 +590,10 @@ class CAS2AuthBackendTest(TestCase):
                  "caslogin/?next=/"))
         self.assertEqual(r.username, "anp8")
         self.assertFalse(r.has_usable_password())
+        mock_urlopen.assert_called_with(
+            'https://cas.columbia.edu/cas/serviceValidate?ticket=foo'
+            '&service=https%3A//slank.ccnmtl.columbia.edu/'
+            'accounts/caslogin/%3Fnext%3D/')
 
         with self.settings(
                 WIND_PROFILE_HANDLERS=['djangowind.auth.DummyProfileHandler']):
@@ -615,22 +605,16 @@ class CAS2AuthBackendTest(TestCase):
             self.assertEqual(r.username, "anp8")
             self.assertFalse(r.has_usable_password())
 
-    @httprettified
-    def test_authenticate_success_existing_user(self):
-        HTTPretty.register_uri(
-            HTTPretty.GET,
-            ("https://cas.columbia.edu/cas/serviceValidate?ticket=foo"
-             "&https%3A//slank.ccnmtl.columbia.edu/accounts/"
-             "caslogin/?next=/"),
-            body=(
-                "\n\n\n<cas:serviceResponse xmlns:cas='http://www."
-                "yale.edu/tp/cas'>\n\t<cas:authenticationSuccess>\n"
-                "\t\t<cas:user>anp8</cas:user>\n"
-                "\n"
-                "\n"
-                "\t</cas:authenticationSuccess>\n"
-                "</cas:serviceResponse>\n")
-        )
+    def test_authenticate_success_existing_user(self, mock_urlopen):
+        self.response.read.return_value = (
+            "\n\n\n<cas:serviceResponse xmlns:cas='http://www."
+            "yale.edu/tp/cas'>\n\t<cas:authenticationSuccess>\n"
+            "\t\t<cas:user>anp8</cas:user>\n"
+            "\n"
+            "\n"
+            "\t</cas:authenticationSuccess>\n"
+            "</cas:serviceResponse>\n")
+        mock_urlopen.return_value = self.response
 
         u = User.objects.create(username="anp8")
         u.set_password("something other than unusable")
@@ -642,25 +626,23 @@ class CAS2AuthBackendTest(TestCase):
                  "caslogin/?next=/"))
         self.assertEqual(r.username, "anp8")
         self.assertNotEqual(r.password, "!")
+        mock_urlopen.assert_called_with(
+            'https://cas.columbia.edu/cas/serviceValidate?ticket=foo'
+            '&service=https%3A//slank.ccnmtl.columbia.edu/'
+            'accounts/caslogin/%3Fnext%3D/')
 
-    @httprettified
-    def test_authenticate_failure(self):
-        HTTPretty.register_uri(
-            HTTPretty.GET,
-            ("https://cas.columbia.edu/cas/serviceValidate?"
-             "ticket=foo&https%3A//slank.ccnmtl.columbia.edu/"
-             "accounts/caslogin/?next=/"),
-            body=(
-                "\n\n\n<cas:serviceResponse xmlns:cas='http"
-                "://www.yale.edu/tp/cas'>\n\t<cas:authenticationFailure "
-                "code='INVALID_SERVICE'>\n\t\tticket &#039;ST-181952-OK0"
-                "qr5suLueHccqPfgIT-idmcasprod2&#039; does not match supp"
-                "lied service.  The original service was &#039;https://"
-                "slank.ccnmtl.columbia.edu/accounts/caslogin/?next=/&#039;"
-                "and the supplied service was &#039;https://slank.ccnmtl."
-                "columbia.edu/accounts/caslogin/&#039;.\n\t</cas:authenti"
-                "cationFailure>\n</cas:serviceResponse>")
-        )
+    def test_authenticate_failure(self, mock_urlopen):
+        self.response.read.return_value = (
+            "\n\n\n<cas:serviceResponse xmlns:cas='http"
+            "://www.yale.edu/tp/cas'>\n\t<cas:authenticationFailure "
+            "code='INVALID_SERVICE'>\n\t\tticket &#039;ST-181952-OK0"
+            "qr5suLueHccqPfgIT-idmcasprod2&#039; does not match supp"
+            "lied service.  The original service was &#039;https://"
+            "slank.ccnmtl.columbia.edu/accounts/caslogin/?next=/&#039;"
+            "and the supplied service was &#039;https://slank.ccnmtl."
+            "columbia.edu/accounts/caslogin/&#039;.\n\t</cas:authenti"
+            "cationFailure>\n</cas:serviceResponse>")
+        mock_urlopen.return_value = self.response
 
         w = CAS2AuthBackend()
         r = w.authenticate(
@@ -668,23 +650,21 @@ class CAS2AuthBackendTest(TestCase):
             url=("https://slank.ccnmtl.columbia.edu/accounts/"
                  "caslogin/?next=/"))
         self.assertEqual(r, None)
+        mock_urlopen.assert_called_with(
+            'https://cas.columbia.edu/cas/serviceValidate?ticket=foo'
+            '&service=https%3A//slank.ccnmtl.columbia.edu/'
+            'accounts/caslogin/%3Fnext%3D/')
 
-    @httprettified
-    def test_authenticate_success_with_mappers(self):
-        HTTPretty.register_uri(
-            HTTPretty.GET,
-            ("https://cas.columbia.edu/cas/serviceValidate?ticket=foo"
-             "&https%3A//slank.ccnmtl.columbia.edu/accounts/"
-             "caslogin/?next=/"),
-            body=(
-                "\n\n\n<cas:serviceResponse xmlns:cas='http://www."
-                "yale.edu/tp/cas'>\n\t<cas:authenticationSuccess>\n"
-                "\t\t<cas:user>anp8</cas:user>\n"
-                "\n"
-                "\n"
-                "\t</cas:authenticationSuccess>\n"
-                "</cas:serviceResponse>\n")
-        )
+    def test_authenticate_success_with_mappers(self, mock_urlopen):
+        self.response.read.return_value = (
+            "\n\n\n<cas:serviceResponse xmlns:cas='http://www."
+            "yale.edu/tp/cas'>\n\t<cas:authenticationSuccess>\n"
+            "\t\t<cas:user>anp8</cas:user>\n"
+            "\n"
+            "\n"
+            "\t</cas:authenticationSuccess>\n"
+            "</cas:serviceResponse>\n")
+        mock_urlopen.return_value = self.response
 
         with self.settings(
                 WIND_AFFIL_HANDLERS=['djangowind.auth.AffilGroupMapper']):
@@ -695,22 +675,24 @@ class CAS2AuthBackendTest(TestCase):
                      "caslogin/?next=/"))
             self.assertEqual(r.username, "anp8")
             self.assertFalse(r.has_usable_password())
+            mock_urlopen.assert_called_with(
+                'https://cas.columbia.edu/cas/serviceValidate?ticket=foo'
+                '&service=https%3A//slank.ccnmtl.columbia.edu/'
+                'accounts/caslogin/%3Fnext%3D/')
 
 
+@patch('djangowind.auth.urlopen')
 class SAMLAuthBackendTest(TestCase):
-    def test_authenticate_no_ticket(self):
+    def setUp(self):
+        self.response = Mock(spec=HTTPResponse)
+
+    def test_authenticate_no_ticket(self, mock_urlopen):
         w = SAMLAuthBackend()
         self.assertEqual(w.authenticate(None), None)
 
-    @httprettified
-    def test_authenticate_success(self):
-        HTTPretty.register_uri(
-            HTTPretty.POST,
-            ("https://cas.columbia.edu/cas/samlValidate?"
-             "TARGET=https%3A%2F%2Fslank.ccnmtl.columbia.edu"
-             "%2Faccounts%2Fcaslogin%2F%3Fnext%3D%2F"),
-            body=saml_success_affils()
-        )
+    def test_authenticate_success(self, mock_urlopen):
+        self.response.read.return_value = saml_success_affils()
+        mock_urlopen.return_value = self.response
 
         w = SAMLAuthBackend()
         r = w.authenticate(
@@ -730,15 +712,9 @@ class SAMLAuthBackendTest(TestCase):
             self.assertEqual(r.username, "anp8")
             self.assertFalse(r.has_usable_password())
 
-    @httprettified
-    def test_authenticate_success_existing_user(self):
-        HTTPretty.register_uri(
-            HTTPretty.POST,
-            ("https://cas.columbia.edu/cas/samlValidate?"
-             "TARGET=https%3A%2F%2Fslank.ccnmtl.columbia.edu"
-             "%2Faccounts%2Fcaslogin%2F%3Fnext%3D%2F"),
-            body=saml_success_affils()
-        )
+    def test_authenticate_success_existing_user(self, mock_urlopen):
+        self.response.read.return_value = saml_success_affils()
+        mock_urlopen.return_value = self.response
 
         u = User.objects.create(username="anp8")
         u.set_password("something other than unusable")
@@ -751,14 +727,9 @@ class SAMLAuthBackendTest(TestCase):
         self.assertEqual(r.username, "anp8")
         self.assertNotEqual(r.password, "!")
 
-    @httprettified
-    def test_authenticate_failure(self):
-        HTTPretty.register_uri(
-            HTTPretty.POST,
-            ("https://cas.columbia.edu/cas/samlValidate?"
-             "TARGET=https%3A%2F%2Fslank.ccnmtl.columbia.edu"
-             "%2Faccounts%2Fcaslogin%2F%3Fnext%3D%2F"),
-            body=SAML_FAIL)
+    def test_authenticate_failure(self, mock_urlopen):
+        self.response.read.return_value = SAML_FAIL
+        mock_urlopen.return_value = self.response
 
         w = SAMLAuthBackend()
         r = w.authenticate(
@@ -767,15 +738,9 @@ class SAMLAuthBackendTest(TestCase):
                  "caslogin/?next=/"))
         self.assertEqual(r, None)
 
-    @httprettified
-    def test_authenticate_success_with_mappers(self):
-        HTTPretty.register_uri(
-            HTTPretty.POST,
-            ("https://cas.columbia.edu/cas/samlValidate?"
-             "TARGET=https%3A%2F%2Fslank.ccnmtl.columbia.edu"
-             "%2Faccounts%2Fcaslogin%2F%3Fnext%3D%2F"),
-            body=saml_success_affils()
-        )
+    def test_authenticate_success_with_mappers(self, mock_urlopen):
+        self.response.read.return_value = saml_success_affils()
+        mock_urlopen.return_value = self.response
 
         with self.settings(
                 WIND_AFFIL_HANDLERS=['djangowind.auth.AffilGroupMapper']):
