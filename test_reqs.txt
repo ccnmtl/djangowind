@@ -3,6 +3,6 @@ flake8==2.4.0
 httpretty==0.8.8
 django-jenkins==0.18.1
 pep8==1.5.7
-pyflakes==0.8.1
+pyflakes==1.1.0
 statsd==3.2.1
 django-statsd-mozilla==0.3.16
