@@ -15,7 +15,7 @@ install:
 # command to run tests
 script:
   - python runtests.py
-  - flake8 djangowind
+  - flake8 djangowind --max-complexity=12
   - coverage run --source=djangowind runtests.py
 after_success:
   - coveralls
