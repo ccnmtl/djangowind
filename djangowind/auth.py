@@ -1,7 +1,28 @@
+from __future__ import unicode_literals
+
 from django.conf import settings
 from django.contrib.auth.models import User, Group
-import urllib
-import urllib2
+
+try:
+    from urllib.request import Request
+except ImportError:
+    from urllib2 import Request
+
+try:
+    from urllib.request import urlopen
+except ImportError:
+    from urllib2 import urlopen
+
+try:
+    from urllib.parse import urlencode
+except ImportError:
+    from urllib import urlencode
+
+try:
+    from urllib.parse import quote
+except ImportError:
+    from urllib2 import quote
+
 from django.core.exceptions import ImproperlyConfigured
 from warnings import warn
 from django_statsd.clients import statsd
@@ -22,7 +43,7 @@ def validate_wind_ticket(ticketid):
     if hasattr(settings, 'WIND_BASE'):
         wind_base = getattr(settings, 'WIND_BASE')
     uri = wind_base + "validate?ticketid=%s" % ticketid
-    response = urllib.urlopen(uri).read()
+    response = urlopen(uri).read()
     lines = response.split("\n")
     if lines[0] == "yes":
         statsd.incr('djangowind.validate_wind_ticket.success')
@@ -51,8 +72,8 @@ def validate_cas2_ticket(ticketid, url):
         cas_base = getattr(settings, 'CAS_BASE')
     uri = cas_base + "cas/serviceValidate?ticket=%s&service=%s" % (
         ticketid,
-        urllib2.quote(url))
-    response = urllib.urlopen(uri).read()
+        quote(url))
+    response = urlopen(uri).read()
     try:
         dom = parseString(response)
         if dom.documentElement.nodeName != 'cas:serviceResponse':
@@ -138,12 +159,12 @@ def validate_saml_ticket(ticketid, url):
         'connection': 'keep-alive',
         'content-type': 'text/xml'}
     params = {'TARGET': url}
-    uri = cas_base + "cas/samlValidate" + '?' + urllib.urlencode(params)
-    url = urllib2.Request(uri, '', headers)
+    uri = cas_base + "cas/samlValidate" + '?' + urlencode(params)
+    request = Request(uri, '', headers)
     data = get_saml_assertion(ticketid)
-    url.add_data(data)
+    request.data = data
 
-    page = urllib2.urlopen(url)
+    page = urlopen(request)
     response = page.read()
     try:
         user = None
@@ -240,10 +261,10 @@ class WindAuthBackend(object):
         module, attr = path[:i], path[i + 1:]
         try:
             mod = __import__(module, {}, {}, [attr])
-        except ImportError, e:
+        except ImportError as e:
             raise ImproperlyConfigured(
                 'Error importing wind handler %s: "%s"' % (module, e))
-        except ValueError, e:
+        except ValueError as e:
             raise ImproperlyConfigured('Error importing wind handler.')
         try:
             cls = getattr(mod, attr)
