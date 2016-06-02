@@ -23,6 +23,16 @@ try:
 except ImportError:
     from urllib2 import quote
 
+ldap3 = None
+ldap = None
+try:
+    import ldap3
+except ImportError:
+    try:
+        import ldap
+    except ImportError:
+        pass
+
 from django.core.exceptions import ImproperlyConfigured
 from warnings import warn
 from django_statsd.clients import statsd
@@ -417,12 +427,6 @@ LDAP_ATTRS = [
 
 def ldap3_lookup(uni=""):
     statsd.incr("djangowind.ldap3_lookup")
-    try:
-        import ldap3
-    except ImportError:
-        statsd.incr('djangowind.ldap3_lookup.import_failed')
-        warn("""this requires the python ldap3 library.""")
-        raise
     LDAP_SERVER = "ldap.columbia.edu"
     BASE_DN = "o=Columbia University, c=us"
     if hasattr(settings, 'LDAP_SERVER'):
@@ -448,15 +452,6 @@ def ldap3_lookup(uni=""):
 
 def python_ldap_lookup(uni=""):
     statsd.incr('djangowind.ldap_lookup')
-    try:
-        import ldap
-    except ImportError:
-        statsd.incr('djangowind.ldap_lookup.import_failed')
-        warn("""this requires the python ldap library.
-you probably need to install 'python-ldap' (on linux) or
-an equivalent""")
-        raise
-
     LDAP_SERVER = "ldap.columbia.edu"
     BASE_DN = "o=Columbia University, c=us"
     if hasattr(settings, 'LDAP_SERVER'):
@@ -498,25 +493,21 @@ class CDAPProfileHandler(object):
 
     def _set_ldap_lookup(self):
         """ set the ldap lookup method based on what library is available """
-        try:
-            # prefer ldap3
-            import ldap3
+        # prefer ldap3
+        if ldap3 is not None:
             self.ldap_lookup = self._ldap3_lookup
             return
-        except ImportError:
-            pass
 
-        try:
-            # fallback to python-ldap
-            import ldap
+        # fallback to python-ldap
+        if ldap is not None:
             self.ldap_lookup = self._python_ldap_lookup
-        except ImportError:
-            # neither are available
-            statsd.incr('djangowind.ldap_lookup.import_failed')
-            warn("""this requires a python ldap library.
-            you probably need to install 'ldap3', 'python-ldap' or
-            an equivalent""")
-            raise
+            return
+
+        # neither are available
+        statsd.incr('djangowind.ldap_lookup.import_failed')
+        warn("""this requires a python ldap library.
+        you probably need to install 'ldap3', 'python-ldap' or
+        an equivalent""")
 
     def process(self, user):
         """ fills in email, last_name, first_name from LDAP """
