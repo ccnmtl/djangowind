@@ -374,6 +374,78 @@ def _handle_ldap_entry(result_data):
     return (found, r)
 
 
+# some of the things we get back are lists, some are strings
+def force_list(s):
+    if type(s) == list:
+        return s
+    return [s]
+
+
+def _handle_ldap3_entry(entry):
+    """ldap returns stuff in a slightly weird format where each entry in
+    the dict has a list of values with one entry instead of just a
+    value. convert that to something a little more useful. switch some
+    field names around while we're at it
+    """
+
+    field_maps = [
+        ('sn', 'lastname'),
+        ('givenname', 'firstname'),
+        ('givenName', 'firstname'),
+        ('telephoneNumber', 'telephonenumber'),
+    ]
+    r = dict()
+    attributes = entry['attributes']
+    for k, v in attributes.items():
+        r[k] = ", ".join(force_list(v))
+        for a, b in field_maps:
+            if k == a:
+                r[b] = r[k]
+    return r
+
+
+# ldap3 requires that we specifically list the fields that
+# we want back. These are all the ones that I can find that
+# CU's LDAP server might give us.
+
+LDAP_ATTRS = [
+    'sn', 'cn', 'givenName', 'telephoneNumber', 'cuMiddlename',
+    'departmentNumber', 'objectClass', 'title', 'mail', 'campusphone',
+    'uni', 'postalAddress', 'ou',
+]
+
+
+def ldap3_lookup(uni=""):
+    statsd.incr("djangowind.ldap3_lookup")
+    try:
+        import ldap3
+    except ImportError:
+        statsd.incr('djangowind.ldap3_lookup.import_failed')
+        warn("""this requires the python ldap3 library.""")
+        raise
+    LDAP_SERVER = "ldap.columbia.edu"
+    BASE_DN = "o=Columbia University, c=us"
+    if hasattr(settings, 'LDAP_SERVER'):
+        LDAP_SERVER = settings.LDAP_SERVER
+    if hasattr(settings, 'BASE_DN'):
+        BASE_DN = settings.BASE_DN
+    baseDN = BASE_DN
+    searchFilter = "(uni=%s)" % uni
+    server = ldap3.Server(LDAP_SERVER, get_info=ldap3.ALL)
+    conn = ldap3.Connection(server, auto_bind=True)
+    conn.search(baseDN, searchFilter, attributes=LDAP_ATTRS)
+    results_dict = {'found': False, 'lastname': '', 'firstname': ''}
+
+    if len(conn.response) > 0:
+        response = conn.response[0]
+        results_dict.update(_handle_ldap3_entry(response))
+        results_dict['found'] = True
+
+    if results_dict['lastname'] == "":
+        results_dict['lastname'] = uni
+    return results_dict
+
+
 def ldap_lookup(uni=""):
     statsd.incr('djangowind.ldap_lookup')
     try:
