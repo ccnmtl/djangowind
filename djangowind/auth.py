@@ -446,7 +446,7 @@ def ldap3_lookup(uni=""):
     return results_dict
 
 
-def ldap_lookup(uni=""):
+def python_ldap_lookup(uni=""):
     statsd.incr('djangowind.ldap_lookup')
     try:
         import ldap
@@ -487,14 +487,45 @@ an equivalent""")
 
 
 class CDAPProfileHandler(object):
-    """ fills in email, last_name, first_name from CDAP """
+    def __init__(self):
+        self._set_ldap_lookup()
+
+    def _ldap3_lookup(self, uni):
+        return ldap3_lookup(uni)
+
+    def _python_ldap_lookup(self, uni):
+        return python_ldap_lookup(uni)
+
+    def _set_ldap_lookup(self):
+        """ set the ldap lookup method based on what library is available """
+        try:
+            # prefer ldap3
+            import ldap3
+            self.ldap_lookup = self._ldap3_lookup
+            return
+        except ImportError:
+            pass
+
+        try:
+            # fallback to python-ldap
+            import ldap
+            self.ldap_lookup = self._python_ldap_lookup
+        except ImportError:
+            # neither are available
+            statsd.incr('djangowind.ldap_lookup.import_failed')
+            warn("""this requires a python ldap library.
+            you probably need to install 'ldap3', 'python-ldap' or
+            an equivalent""")
+            raise
+
     def process(self, user):
+        """ fills in email, last_name, first_name from LDAP """
         statsd.incr('djangowind.cdap.called')
         if not user.email:
             user.email = user.username + "@columbia.edu"
         if not user.last_name or not user.first_name:
             try:
-                r = ldap_lookup(user.username)
+                r = self.ldap_lookup(user.username)
                 if r.get('found', False):
                     statsd.incr('djangowind.cdap.found')
                     user.last_name = r.get('lastname', r.get('sn', ''))
