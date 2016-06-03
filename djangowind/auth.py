@@ -519,18 +519,15 @@ class CDAPProfileHandler(object):
         if not user.email:
             user.email = user.username + "@columbia.edu"
         if not user.last_name or not user.first_name:
-            try:
-                r = self.ldap_lookup(user.username)
-                if r.get('found', False):
-                    statsd.incr('djangowind.cdap.found')
-                    user.last_name = r.get('lastname', r.get('sn', ''))
-                    user.first_name = r.get(
-                        'firstname',
-                        r.get('givenName', ''))
-                else:
-                    statsd.incr('djangowind.cdap.not_found')
-            except ImportError:
-                pass
+            r = self.ldap_lookup(user.username)
+            if r.get('found', False):
+                statsd.incr('djangowind.cdap.found')
+                user.last_name = r.get('lastname', r.get('sn', ''))
+                user.first_name = r.get(
+                    'firstname',
+                    r.get('givenName', ''))
+            else:
+                statsd.incr('djangowind.cdap.not_found')
         user.save()
 
 
