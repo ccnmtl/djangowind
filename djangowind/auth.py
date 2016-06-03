@@ -485,6 +485,10 @@ class CDAPProfileHandler(object):
     def __init__(self):
         self._set_ldap_lookup()
 
+    def ldap_lookup(self, uni):
+        warn("""no ldap library available""")
+        return dict(found=False, lastname=uni, firstname="")
+
     def _ldap3_lookup(self, uni):
         return ldap3_lookup(uni)
 
