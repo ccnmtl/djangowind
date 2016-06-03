@@ -23,6 +23,16 @@ try:
 except ImportError:
     from urllib2 import quote
 
+ldap3 = None
+ldap = None
+try:
+    import ldap3
+except ImportError:
+    try:
+        import ldap
+    except ImportError:
+        pass
+
 from django.core.exceptions import ImproperlyConfigured
 from warnings import warn
 from django_statsd.clients import statsd
@@ -374,17 +384,74 @@ def _handle_ldap_entry(result_data):
     return (found, r)
 
 
-def ldap_lookup(uni=""):
-    statsd.incr('djangowind.ldap_lookup')
-    try:
-        import ldap
-    except ImportError:
-        statsd.incr('djangowind.ldap_lookup.import_failed')
-        warn("""this requires the python ldap library.
-you probably need to install 'python-ldap' (on linux) or
-an equivalent""")
-        raise
+# some of the things we get back are lists, some are strings
+def force_list(s):
+    if type(s) == list:
+        return s
+    return [s]
 
+
+def _handle_ldap3_entry(entry):
+    """ldap returns stuff in a slightly weird format where each entry in
+    the dict has a list of values with one entry instead of just a
+    value. convert that to something a little more useful. switch some
+    field names around while we're at it
+    """
+
+    field_maps = [
+        ('sn', 'lastname'),
+        ('givenname', 'firstname'),
+        ('givenName', 'firstname'),
+        ('telephoneNumber', 'telephonenumber'),
+    ]
+    r = dict()
+    attributes = entry['attributes']
+    for k, v in attributes.items():
+        r[k] = ", ".join(force_list(v))
+        for a, b in field_maps:
+            if k == a:
+                r[b] = r[k]
+    return r
+
+
+# ldap3 requires that we specifically list the fields that
+# we want back. These are all the ones that I can find that
+# CU's LDAP server might give us.
+
+LDAP_ATTRS = [
+    'sn', 'cn', 'givenName', 'telephoneNumber', 'cuMiddlename',
+    'departmentNumber', 'objectClass', 'title', 'mail', 'campusphone',
+    'uni', 'postalAddress', 'ou',
+]
+
+
+def ldap3_lookup(uni=""):
+    statsd.incr("djangowind.ldap3_lookup")
+    LDAP_SERVER = "ldap.columbia.edu"
+    BASE_DN = "o=Columbia University, c=us"
+    if hasattr(settings, 'LDAP_SERVER'):
+        LDAP_SERVER = settings.LDAP_SERVER
+    if hasattr(settings, 'BASE_DN'):
+        BASE_DN = settings.BASE_DN
+    baseDN = BASE_DN
+    searchFilter = "(uni=%s)" % uni
+    server = ldap3.Server(LDAP_SERVER, get_info=ldap3.ALL)
+    conn = ldap3.Connection(server, auto_bind=True)
+    conn.search(baseDN, searchFilter, attributes=LDAP_ATTRS)
+    results_dict = {'found': False, 'lastname': '', 'firstname': ''}
+
+    if len(conn.response) > 0:
+        response = conn.response[0]
+        results_dict.update(_handle_ldap3_entry(response))
+        results_dict['found'] = True
+
+    if results_dict['lastname'] == "":
+        results_dict['lastname'] = uni
+    return results_dict
+
+
+def python_ldap_lookup(uni=""):
+    statsd.incr('djangowind.ldap_lookup')
     LDAP_SERVER = "ldap.columbia.edu"
     BASE_DN = "o=Columbia University, c=us"
     if hasattr(settings, 'LDAP_SERVER'):
@@ -415,24 +482,52 @@ an equivalent""")
 
 
 class CDAPProfileHandler(object):
-    """ fills in email, last_name, first_name from CDAP """
+    def __init__(self):
+        self._set_ldap_lookup()
+
+    def ldap_lookup(self, uni):
+        warn("""no ldap library available""")
+        return dict(found=False, lastname=uni, firstname="")
+
+    def _ldap3_lookup(self, uni):
+        return ldap3_lookup(uni)
+
+    def _python_ldap_lookup(self, uni):
+        return python_ldap_lookup(uni)
+
+    def _set_ldap_lookup(self):
+        """ set the ldap lookup method based on what library is available """
+        # prefer ldap3
+        if ldap3 is not None:
+            self.ldap_lookup = self._ldap3_lookup
+            return
+
+        # fallback to python-ldap
+        if ldap is not None:
+            self.ldap_lookup = self._python_ldap_lookup
+            return
+
+        # neither are available
+        statsd.incr('djangowind.ldap_lookup.import_failed')
+        warn("""this requires a python ldap library.
+        you probably need to install 'ldap3', 'python-ldap' or
+        an equivalent""")
+
     def process(self, user):
+        """ fills in email, last_name, first_name from LDAP """
         statsd.incr('djangowind.cdap.called')
         if not user.email:
             user.email = user.username + "@columbia.edu"
         if not user.last_name or not user.first_name:
-            try:
-                r = ldap_lookup(user.username)
-                if r.get('found', False):
-                    statsd.incr('djangowind.cdap.found')
-                    user.last_name = r.get('lastname', r.get('sn', ''))
-                    user.first_name = r.get(
-                        'firstname',
-                        r.get('givenName', ''))
-                else:
-                    statsd.incr('djangowind.cdap.not_found')
-            except ImportError:
-                pass
+            r = self.ldap_lookup(user.username)
+            if r.get('found', False):
+                statsd.incr('djangowind.cdap.found')
+                user.last_name = r.get('lastname', r.get('sn', ''))
+                user.first_name = r.get(
+                    'firstname',
+                    r.get('givenName', ''))
+            else:
+                statsd.incr('djangowind.cdap.not_found')
         user.save()
 
 

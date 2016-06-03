@@ -11,11 +11,13 @@ except ImportError:
     from mock import Mock, patch
 
 from django.test import TestCase
-from djangowind.auth import validate_wind_ticket, WindAuthBackend
-from djangowind.auth import validate_cas2_ticket, CAS2AuthBackend
-from djangowind.auth import validate_saml_ticket, SAMLAuthBackend
-from djangowind.auth import AffilGroupMapper, StaffMapper, SuperuserMapper
-from djangowind.auth import _handle_ldap_entry
+from djangowind.auth import (
+    validate_wind_ticket, WindAuthBackend, validate_cas2_ticket,
+    CAS2AuthBackend, validate_saml_ticket, SAMLAuthBackend,
+    AffilGroupMapper, StaffMapper, SuperuserMapper,
+    _handle_ldap_entry, _handle_ldap3_entry,
+)
+
 from django.contrib.auth.models import User, Group
 import os.path
 
@@ -810,3 +812,50 @@ class HandleLdapEntryTest(TestCase):
         self.assertEqual(r[0], True)
         self.assertEqual(
             r[1], {'lastname': 'd', 'one': 'a, b, c', 'sn': 'd, e, f'})
+
+
+class HandleLdap3EntryTest(TestCase):
+    def test_handle_ldap3_entry_empty(self):
+        e = dict(attributes=dict())
+        r = _handle_ldap3_entry(e)
+        self.assertEqual(r, dict())
+
+    def test_handle_ldap3_entry(self):
+        e = {'dn': u'uni=anp8,ou=People,o=Columbia University,c=US',
+             'attributes': {
+                 u'telephoneNumber': [u'+1 212 854 1813'],
+                 u'departmentNumber': [u'1612303'],
+                 u'cuMiddlename': [u'N.'],
+                 u'cn': [u'Anders N. Pearson'],
+                 u'title': [u'Manager, Web Infrastructure'],
+                 u'objectClass': [u'person', u'organizationalPerson',
+                                  u'inetOrgPerson', u'cuPerson',
+                                  u'cuRestricted', u'eduPerson'],
+                 u'campusphone': [u'MS 4-1813'],
+                 u'sn': [u'Pearson'],
+                 u'uni': u'anp8',
+                 u'mail': [u'anders@columbia.edu'],
+                 u'postalAddress': [u'somewhere'],
+                 u'givenName': [u'Anders'],
+                 u'ou': [u'CU Information Technology']},
+             'raw_attributes': {
+                 u'telephoneNumber': ['+1 212 854 1813'],
+                 u'departmentNumber': ['1612303'],
+                 u'cuMiddlename': ['N.'],
+                 u'cn': ['Anders N. Pearson'],
+                 u'title': ['Manager, Web Infrastructure'],
+                 u'objectClass': ['person', 'organizationalPerson',
+                                  'inetOrgPerson', 'cuPerson',
+                                  'cuRestricted', 'eduPerson'],
+                 u'campusphone': ['MS 4-1813'],
+                 u'sn': ['Pearson'], u'uni': ['anp8'],
+                 u'mail': ['anders@columbia.edu'],
+                 u'postalAddress': ['somewhere'],
+                 u'givenName': ['Anders'],
+                 u'ou': ['CU Information Technology']},
+             'type': 'searchResEntry'}
+        r = _handle_ldap3_entry(e)
+        self.assertEqual(r['uni'], 'anp8')
+        self.assertEqual(r['sn'], 'Pearson')
+        self.assertEqual(r['firstname'], 'Anders')
+        self.assertEqual(r['lastname'], 'Pearson')
