@@ -136,7 +136,7 @@ settings.py:
 
     WIND_PROFILE_HANDLERS = ['djangowind.auth.CDAPProfileHandler']
 
-The `CDAPProfilHandler` requires that you have the `python-ldap`
+The `CDAPProfilHandler` requires that you have the `ldap3` or `python-ldap`
 library installed in your environment (this sometimes requires system
 packages above and beyond the Python).
 
