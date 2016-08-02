@@ -2,6 +2,11 @@ from __future__ import unicode_literals
 
 from django.conf import settings
 from django.contrib.auth.models import User, Group
+from django.core.exceptions import ImproperlyConfigured
+from warnings import warn
+from django_statsd.clients import statsd
+from xml.dom.minidom import parseString
+from xml.etree import ElementTree
 
 try:
     from urllib.request import Request
@@ -32,12 +37,6 @@ except ImportError:
         import ldap
     except ImportError:
         pass
-
-from django.core.exceptions import ImproperlyConfigured
-from warnings import warn
-from django_statsd.clients import statsd
-from xml.dom.minidom import parseString
-from xml.etree import ElementTree
 
 
 def validate_wind_ticket(ticketid):
