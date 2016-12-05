@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 from django.http import HttpResponseRedirect, HttpResponseForbidden
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 
 from django.contrib.auth import authenticate
 from django.contrib.auth import login as django_login
@@ -76,7 +76,7 @@ def login(request, template_name='registration/login.html',
     else:
         current_site = RequestSite(request)
 
-    return render_to_response(template_name, {
+    return render(request, template_name, {
         'form': form,
         redirect_field_name: redirect_to,
         'site_name': current_site.name,
@@ -84,7 +84,7 @@ def login(request, template_name='registration/login.html',
         'wind_base': get_wind_base(),
         'cas_base': get_cas_base(),
         'wind_service': get_wind_service(),
-    }, context_instance=RequestContext(request))
+    })
 login = never_cache(login)
 
 
