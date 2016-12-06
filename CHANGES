@@ -1,3 +1,8 @@
+0.16.1 (2016-12-06)
+===================
+
+* django 1.10 fix
+
 0.16.0 (2016-09-27)
 
 * convert to Django 1.10 compatible urls.py
