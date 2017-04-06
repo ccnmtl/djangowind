@@ -80,29 +80,13 @@ def login(request, template_name='registration/login.html',
         redirect_field_name: redirect_to,
         'site_name': current_site.name,
         'site': current_site,
-        'wind_base': get_wind_base(),
         'cas_base': get_cas_base(),
-        'wind_service': get_wind_service(),
     })
 login = never_cache(login)
 
 
 # don't know why django.conf.settings doesn't
 # support .get() type access...
-def get_wind_base():
-    if hasattr(settings, 'WIND_BASE'):
-        return settings.WIND_BASE
-    else:
-        return None
-
-
-def get_wind_service():
-    if hasattr(settings, 'WIND_SERVICE'):
-        return settings.WIND_SERVICE
-    else:
-        return None
-
-
 def get_cas_base():
     if hasattr(settings, 'CAS_BASE'):
         return settings.CAS_BASE
@@ -117,9 +101,7 @@ def logout(request, next_page=None,
     was_wind_login = SESSION_KEY in request.session
     django_logout(request)
     statsd.incr('djangowind.logout')
-    if was_wind_login and hasattr(settings, 'WIND_BASE'):
-        return HttpResponseRedirect('%slogout' % settings.WIND_BASE)
-    elif was_wind_login and hasattr(settings, 'CAS_BASE'):
+    if was_wind_login and hasattr(settings, 'CAS_BASE'):
         return HttpResponseRedirect('%scas/logout' % settings.CAS_BASE)
     else:
         return auth_logout_view(request, next_page, template_name,
@@ -127,35 +109,8 @@ def logout(request, next_page=None,
 
 
 @csrf_exempt
-def windlogin(request, redirect_field_name=REDIRECT_FIELD_NAME):
-    """ validates the WIND ticket and logs the user in """
-    if 'ticketid' in request.GET:
-        statsd.incr('djangowind.windlogin.called')
-        u = authenticate(ticket=request.GET['ticketid'])
-        if u is not None:
-            redirect_to = request.GET.get(redirect_field_name, '')
-            # Light security check -- make sure redirect_to isn't garbage.
-            if not redirect_to:
-                redirect_to = settings.LOGIN_REDIRECT_URL
-            from django.contrib.auth import login
-            login(request, u)
-            statsd.incr('djangowind.windlogin.success')
-            try:
-                request.session.delete_test_cookie()
-                request.session[SESSION_KEY] = True
-            except KeyError:
-                pass  # sometimes this just fails
-            return HttpResponseRedirect(redirect_to)
-        else:
-            statsd.incr('djangowind.windlogin.auth_failure')
-    else:
-        statsd.incr('djangowind.windlogin.no_ticketid')
-    return HttpResponseForbidden("could not login through WIND")
-
-
-@csrf_exempt
 def caslogin(request, redirect_field_name=REDIRECT_FIELD_NAME):
-    """ validates the WIND ticket and logs the user in """
+    """ validates the CAS ticket and logs the user in """
     ticketid_field_name = getattr(settings, 'CAS_TICKETID_FIELD_NAME',
                                   'ticketid')
     if ticketid_field_name in request.GET:

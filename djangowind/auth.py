@@ -39,34 +39,6 @@ except ImportError:
         pass
 
 
-def validate_wind_ticket(ticketid):
-    """
-    checks a wind ticketid.
-    if successful, it returns (True,username)
-    otherwise it returns (False,error message)
-    """
-    statsd.incr('djangowind.validate_wind_ticket.called')
-    if ticketid == "":
-        return (False, 'no ticketid', '')
-    wind_base = "https://wind.columbia.edu/"
-    if hasattr(settings, 'WIND_BASE'):
-        wind_base = getattr(settings, 'WIND_BASE')
-    uri = wind_base + "validate?ticketid=%s" % ticketid
-    response = urlopen(uri).read()
-    lines = response.split("\n")
-    if lines[0] == "yes":
-        statsd.incr('djangowind.validate_wind_ticket.success')
-        username = lines[1]
-        groups = [line for line in lines[1:] if line != ""]
-        return (True, username, groups)
-    elif lines[0] == "no":
-        statsd.incr('djangowind.validate_wind_ticket.fail')
-        return (False, "The ticket was already used or was invalid.", [])
-    else:
-        statsd.incr('djangowind.validate_wind_ticket.invalid')
-        return (False, "WIND did not return a valid response.", [])
-
-
 def validate_cas2_ticket(ticketid, url):
     """
     checks a cas ticketid.
@@ -228,36 +200,11 @@ def validate_saml_ticket(ticketid, url):
         return (False, "CAS did not return a valid response.", [])
 
 
-class WindAuthBackend(object):
+class BaseAuthBackend(object):
     supports_inactive_user = True
 
     def authenticate(self, ticket=None):
-        statsd.incr('djangowind.windauthbackend.authenticate.called')
-        if ticket is None:
-            return None
-        (response, username, groups) = validate_wind_ticket(ticket)
-        if response is True:
-            try:
-                user = User.objects.get(username=username)
-            except User.DoesNotExist:
-                statsd.incr('djangowind.windauthbackend.create_user')
-                user = User(username=username, password='wind user')
-                user.set_unusable_password()
-                user.save()
-
-            for handler in self.get_profile_handlers():
-                handler.process(user)
-
-            for handler in self.get_mappers():
-                handler.map(user, groups)
-            return user
-        else:
-            # i don't know how to actually get this error message
-            # to bubble back up to the user. must dig into
-            # django auth deeper.
-            statsd.incr('djangowind.windauthbackend.failure')
-            pass
-        return None
+        raise NotImplemented
 
     def get_user(self, user_id):
         try:
@@ -300,7 +247,7 @@ class WindAuthBackend(object):
         return handlers
 
 
-class CAS2AuthBackend(WindAuthBackend):
+class CAS2AuthBackend(BaseAuthBackend):
     def authenticate(self, ticket=None, url=None):
         statsd.incr('djangowind.cas2authbackend.authenticate.called')
         if ticket is None:
@@ -332,7 +279,7 @@ class CAS2AuthBackend(WindAuthBackend):
         return None
 
 
-class SAMLAuthBackend(WindAuthBackend):
+class SAMLAuthBackend(BaseAuthBackend):
     def authenticate(self, ticket=None, url=None):
         statsd.incr('djangowind.samlauthbackend.authenticate.called')
         if ticket is None:
