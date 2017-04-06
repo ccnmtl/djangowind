@@ -12,7 +12,7 @@ except ImportError:
 
 from django.test import TestCase
 from djangowind.auth import (
-    validate_wind_ticket, WindAuthBackend, validate_cas2_ticket,
+    validate_cas2_ticket, BaseAuthBackend,
     CAS2AuthBackend, validate_saml_ticket, SAMLAuthBackend,
     AffilGroupMapper, StaffMapper, SuperuserMapper,
     _handle_ldap_entry, _handle_ldap3_entry,
@@ -20,69 +20,6 @@ from djangowind.auth import (
 
 from django.contrib.auth.models import User, Group
 import os.path
-
-
-@patch('djangowind.auth.urlopen')
-class ValidateWindTicketTest(TestCase):
-    def setUp(self):
-        self.response = Mock(spec=HTTPResponse)
-
-    def test_no_ticket(self, mock_urlopen):
-        self.assertEqual(
-            validate_wind_ticket(""),
-            (False, 'no ticketid', ''))
-
-    def test_validate_ticket_success(self, mock_urlopen):
-        self.response.read.return_value = 'yes\nanders'
-        mock_urlopen.return_value = self.response
-
-        self.assertEqual(
-            validate_wind_ticket("foo"),
-            (True, 'anders', ['anders']))
-        mock_urlopen.assert_called_with(
-            'https://wind.columbia.edu/validate?ticketid=foo')
-
-    def test_validate_ticket_success_with_groups(self, mock_urlopen):
-        self.response.read.return_value = "yes\nanders\ngroup1\ngroup2"
-        mock_urlopen.return_value = self.response
-
-        self.assertEqual(
-            validate_wind_ticket("foo"),
-            (True, 'anders', ['anders', 'group1', 'group2']))
-        mock_urlopen.assert_called_with(
-            'https://wind.columbia.edu/validate?ticketid=foo')
-
-    def test_validate_ticket_fail(self, mock_urlopen):
-        self.response.read.return_value = 'no\nanders'
-        mock_urlopen.return_value = self.response
-
-        self.assertEqual(
-            validate_wind_ticket("foo"),
-            (False, "The ticket was already used or was invalid.", []))
-        mock_urlopen.assert_called_with(
-            'https://wind.columbia.edu/validate?ticketid=foo')
-
-    def test_validate_ticket_invalid_response(self, mock_urlopen):
-        self.response.read.return_value = \
-            "holy crap! I'm not a valid WIND response!"
-        mock_urlopen.return_value = self.response
-
-        self.assertEqual(
-            validate_wind_ticket("foo"),
-            (False, "WIND did not return a valid response.", []))
-        mock_urlopen.assert_called_with(
-            'https://wind.columbia.edu/validate?ticketid=foo')
-
-    def test_validate_ticket_alternate_wind_base(self, mock_urlopen):
-        self.response.read.return_value = 'yes\nanders'
-        mock_urlopen.return_value = self.response
-
-        with self.settings(WIND_BASE="https://foo.example.com/"):
-            self.assertEqual(
-                validate_wind_ticket("foo"),
-                (True, 'anders', ['anders']))
-            mock_urlopen.assert_called_with(
-                'https://foo.example.com/validate?ticketid=foo')
 
 
 @patch('djangowind.auth.urlopen')
@@ -492,70 +429,12 @@ class ValidateSAMLTicketTest(TestCase):
 
 
 @patch('djangowind.auth.urlopen')
-class WindAuthBackendTest(TestCase):
+class BaseAuthBackendTest(TestCase):
     def setUp(self):
         self.response = Mock(spec=HTTPResponse)
 
-    def test_authenticate_no_ticket(self, mock_urlopen):
-        w = WindAuthBackend()
-        self.assertEqual(w.authenticate(None), None)
-
-    def test_authenticate_success(self, mock_urlopen):
-        self.response.read.return_value = 'yes\nanders'
-        mock_urlopen.return_value = self.response
-        w = WindAuthBackend()
-        r = w.authenticate("foo")
-        self.assertEqual(r.username, "anders")
-        self.assertFalse(r.has_usable_password())
-
-        with self.settings(
-                WIND_PROFILE_HANDLERS=['djangowind.auth.DummyProfileHandler']):
-            w = WindAuthBackend()
-            r = w.authenticate("foo")
-            self.assertEqual(r.username, "anders")
-            self.assertFalse(r.has_usable_password())
-            mock_urlopen.assert_called_with(
-                'https://wind.columbia.edu/validate?ticketid=foo')
-
-    def test_authenticate_success_existing_user(self, mock_urlopen):
-        self.response.read.return_value = 'yes\nanders'
-        mock_urlopen.return_value = self.response
-
-        u = User.objects.create(username="anders")
-        u.set_password("something other than unusable")
-        u.save()
-        w = WindAuthBackend()
-        r = w.authenticate("foo")
-        self.assertEqual(r.username, "anders")
-        self.assertNotEqual(r.password, "!")
-        mock_urlopen.assert_called_with(
-            'https://wind.columbia.edu/validate?ticketid=foo')
-
-    def test_authenticate_failure(self, mock_urlopen):
-        self.response.read.return_value = 'no\nanders'
-        mock_urlopen.return_value = self.response
-
-        w = WindAuthBackend()
-        r = w.authenticate("foo")
-        self.assertEqual(r, None)
-        mock_urlopen.assert_called_with(
-            'https://wind.columbia.edu/validate?ticketid=foo')
-
-    def test_authenticate_success_with_mappers(self, mock_urlopen):
-        self.response.read.return_value = 'yes\nanders'
-        mock_urlopen.return_value = self.response
-
-        with self.settings(
-                WIND_AFFIL_HANDLERS=['djangowind.auth.AffilGroupMapper']):
-            w = WindAuthBackend()
-            r = w.authenticate("foo")
-            self.assertEqual(r.username, "anders")
-            self.assertFalse(r.has_usable_password())
-            mock_urlopen.assert_called_with(
-                'https://wind.columbia.edu/validate?ticketid=foo')
-
     def test_get_user(self, mock_urlopen):
-        w = WindAuthBackend()
+        w = BaseAuthBackend()
         # no pre-existing user
         r = w.get_user(1)
         self.assertEqual(r, None)
