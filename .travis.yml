@@ -22,10 +22,10 @@ notifications:
   slack: ccnmtl:GizSNscLWJLldjQrffB8mwgm
 deploy:
   provider: pypi
+  distributions: "sdist bdist_wheel"
   user: ctlpypi
   password:
     secure: K9YZJBFyFxQhlE221Pgzv9EoMEYmiy21ieRYHwcndKq5P8BJX47qPxHz4JE1lqUb8H3+3p2Bzlaw3epccYrnoYfuGqRpfkKJ3TbbyBIhwHdpV/9P7en4KOb4YSgQidJHwu1ogXYXXuexrvqXtg94OZhUThVKiO6tXumkAum/fqQ=
   on:
     tags: true
-    distributions: sdist bdist_wheel
     repo: ccnmtl/djangowind
