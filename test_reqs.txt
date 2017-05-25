@@ -6,4 +6,3 @@ pep8==1.7.0
 pyflakes==1.2.3
 statsd==3.2.1
 django-statsd-mozilla==0.3.16
-ipdb==0.10.1
