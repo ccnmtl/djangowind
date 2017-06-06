@@ -82,6 +82,8 @@ def login(request, template_name='registration/login.html',
         'site': current_site,
         'cas_base': get_cas_base(),
     })
+
+
 login = never_cache(login)
 
 

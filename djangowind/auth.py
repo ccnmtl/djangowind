@@ -115,6 +115,7 @@ def get_saml_assertion(ticket):
         + """</samlp:AssertionArtifact></samlp:Request>"""
         """</SOAP-ENV:Body></SOAP-ENV:Envelope>""")
 
+
 SAML_1_0_NS = 'urn:oasis:names:tc:SAML:1.0:'
 SAML_1_0_PROTOCOL_NS = '{' + SAML_1_0_NS + 'protocol' + '}'
 SAML_1_0_ASSERTION_NS = '{' + SAML_1_0_NS + 'assertion' + '}'

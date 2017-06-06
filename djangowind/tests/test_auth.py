@@ -180,6 +180,7 @@ class ValidateCas2TicketTest(TestCase):
             "&service=https%3A//slank.ccnmtl.columbia.edu/accounts/"
             "caslogin/%3Fnext%3D/")
 
+
 TR_SUCCESS = """<cas:serviceResponse xmlns:cas='http://www.yale.edu/tp/cas'>
 <cas:authenticationSuccess>
 <cas:user>test_claim</cas:user>
