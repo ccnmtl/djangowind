@@ -29,7 +29,7 @@ setup(
     name="djangowind",
     version="1.0.0",
     author="Anders Pearson",
-    author_email="anders@columbia.edu",
+    author_email="ccnmtl-dev@columbia.edu",
     url="https://github.com/ccnmtl/djangowind",
     description="Django Authentication backend for CAS",
     long_description="Django Authentication backend for CAS and associated helpers",
