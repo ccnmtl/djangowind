@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import ImproperlyConfigured
+from django.utils.encoding import smart_bytes
 from warnings import warn
 from django_statsd.clients import statsd
 from xml.dom.minidom import parseString
@@ -102,18 +103,18 @@ what was there.
 
 
 def get_saml_assertion(ticket):
-    return (
-        """<?xml version="1.0" encoding="UTF-8"?>"""
-        """<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://"""
-        """schemas.xmlsoap.org/soap/envelope/"><SOAP-ENV"""
-        """:Header/><SOAP-ENV:Body><samlp:Request xmlns:"""
-        """samlp="urn:oasis:names:tc:SAML:1.0:protocol"  """
-        """MajorVersion="1" MinorVersion="1" """
-        """RequestID="_192.168.16.51.1024506224022" """
-        """IssueInstant="2002-06-19T17:03:44.022Z">"""
-        """<samlp:AssertionArtifact>""" + ticket
-        + """</samlp:AssertionArtifact></samlp:Request>"""
-        """</SOAP-ENV:Body></SOAP-ENV:Envelope>""")
+    return smart_bytes(
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://'
+        'schemas.xmlsoap.org/soap/envelope/"><SOAP-ENV'
+        ':Header/><SOAP-ENV:Body><samlp:Request xmlns:'
+        'samlp="urn:oasis:names:tc:SAML:1.0:protocol"  '
+        'MajorVersion="1" MinorVersion="1" '
+        'RequestID="_192.168.16.51.1024506224022" '
+        'IssueInstant="2002-06-19T17:03:44.022Z">'
+        '<samlp:AssertionArtifact>' + ticket +
+        '</samlp:AssertionArtifact></samlp:Request>'
+        '</SOAP-ENV:Body></SOAP-ENV:Envelope>')
 
 
 SAML_1_0_NS = 'urn:oasis:names:tc:SAML:1.0:'
@@ -141,7 +142,7 @@ def validate_saml_ticket(ticketid, url):
         'connection': 'keep-alive',
         'content-type': 'text/xml'}
     params = {'TARGET': url}
-    uri = cas_base + "cas/samlValidate" + '?' + urlencode(params)
+    uri = '{}cas/samlValidate?{}'.format(cas_base, urlencode(params))
     request = Request(uri, '', headers)
     data = get_saml_assertion(ticketid)
     request.data = data
