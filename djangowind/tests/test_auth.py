@@ -353,7 +353,7 @@ class GetSAMLAssertionTest(TestCase):
             urlopen(request)
         except URLError:
             # As long as this isn't a TypeError, and the url request
-            # was actuall made, then we can assert that
+            # was actually made, then we can assert that
             # get_saml_assertion() is good. This is to prevent an
             # issue introduced since Python 3:
             #
