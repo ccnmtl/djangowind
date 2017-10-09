@@ -1,6 +1,26 @@
 from __future__ import unicode_literals
 
 try:
+    from urllib.error import URLError
+except ImportError:
+    from urllib2 import URLError
+
+try:
+    from urllib.request import Request
+except ImportError:
+    from urllib2 import Request
+
+try:
+    from urllib.request import urlopen
+except ImportError:
+    from urllib2 import urlopen
+
+try:
+    from urllib.parse import urlencode
+except ImportError:
+    from urllib import urlencode
+
+try:
     from http.client import HTTPResponse
 except ImportError:
     from httplib import HTTPResponse
@@ -12,6 +32,7 @@ except ImportError:
 
 from django.test import TestCase
 from djangowind.auth import (
+    get_saml_assertion,
     validate_cas2_ticket, BaseAuthBackend,
     CAS2AuthBackend, validate_saml_ticket, SAMLAuthBackend,
     AffilGroupMapper, StaffMapper, SuperuserMapper,
@@ -310,6 +331,36 @@ def jonah_affils():
 
 def tr_affils():
     return open_affils("tr_affils.txt")
+
+
+class GetSAMLAssertionTest(TestCase):
+    def test_can_post_data(self):
+        cas_base = 'https://example.com'
+        url = 'https://example.com/abc'
+        headers = {
+            'soapaction': 'http://www.oasis-open.org/committees/security',
+            'cache-control': 'no-cache',
+            'pragma': 'no-cache',
+            'accept': 'text/xml',
+            'connection': 'keep-alive',
+            'content-type': 'text/xml'
+        }
+        params = {'TARGET': url}
+        uri = '{}cas/samlValidate?{}'.format(cas_base, urlencode(params))
+        request = Request(uri, '', headers)
+        request.data = get_saml_assertion('ticket')
+        try:
+            urlopen(request)
+        except URLError:
+            # As long as this isn't a TypeError, and the url request
+            # was actually made, then we can assert that
+            # get_saml_assertion() is good. This is to prevent an
+            # issue introduced since Python 3:
+            #
+            #  POST data should be bytes or an iterable of bytes. It
+            #  cannot be of type str.
+            #
+            pass
 
 
 @patch('djangowind.auth.urlopen')
