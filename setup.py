@@ -27,7 +27,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="djangowind",
-    version="1.0.0",
+    version="1.0.1",
     author="Anders Pearson",
     author_email="ccnmtl-dev@columbia.edu",
     url="https://github.com/ccnmtl/djangowind",
