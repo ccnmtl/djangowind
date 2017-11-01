@@ -1,13 +1,17 @@
 from __future__ import unicode_literals
 
+from warnings import warn
+from xml.dom.minidom import parseString
+from xml.etree import ElementTree
+from xml.etree.ElementTree import ParseError
+from xml.parsers.expat import ExpatError
+
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.encoding import smart_bytes
-from warnings import warn
 from django_statsd.clients import statsd
-from xml.dom.minidom import parseString
-from xml.etree import ElementTree
+
 
 try:
     from urllib.request import Request
@@ -79,7 +83,7 @@ def validate_cas2_ticket(ticketid, url):
 
         statsd.incr('djangowind.validate_cas2_ticket.invalid')
         return (False, "CAS did not return a valid response.", [])
-    except:
+    except (ExpatError, ParseError, KeyError):
         statsd.incr('djangowind.validate_cas2_ticket.invalid')
         return (False, "CAS did not return a valid response.", [])
 
@@ -197,7 +201,7 @@ def validate_saml_ticket(ticketid, url):
         statsd.incr('djangowind.validate_saml_ticket.success')
         return (True, user, affils)
 
-    except:
+    except (ParseError, KeyError, AttributeError):
         statsd.incr('djangowind.validate_saml_ticket.invalid')
         return (False, "CAS did not return a valid response.", [])
 
@@ -406,16 +410,16 @@ def python_ldap_lookup(uni=""):
         LDAP_SERVER = settings.LDAP_SERVER
     if hasattr(settings, 'BASE_DN'):
         BASE_DN = settings.BASE_DN
-    l = ldap.open(LDAP_SERVER)
+    ldap_server = ldap.open(LDAP_SERVER)
     baseDN = BASE_DN
     searchScope = ldap.SCOPE_SUBTREE
     retrieveAttributes = None
     searchFilter = "uni=%s" % uni
-    ldap_result_id = l.search(baseDN, searchScope, searchFilter,
-                              retrieveAttributes)
+    ldap_result_id = ldap_server.search(baseDN, searchScope, searchFilter,
+                                        retrieveAttributes)
     results_dict = {'found': False, 'lastname': '', 'firstname': ''}
     while 1:
-        result_type, result_data = l.result(ldap_result_id, 0)
+        result_type, result_data = ldap_server.result(ldap_result_id, 0)
         if result_data == []:
             break
         else:

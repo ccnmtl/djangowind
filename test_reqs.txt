@@ -1,6 +1,6 @@
 coverage==4.4.1
 mock==2.0.0
-flake8==3.4.1
+flake8==3.5.0
 django-jenkins==0.110.0
 pep8==1.7.1
 pyflakes==1.6.0
