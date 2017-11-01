@@ -5,3 +5,5 @@ reports
 ve
 *.pyc
 docs/_build/
+.project
+.pydevproject
