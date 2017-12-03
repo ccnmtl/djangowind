@@ -16,7 +16,10 @@ try:
 except ImportError:
     from django.contrib.sites.models import RequestSite
 from django.contrib.auth import REDIRECT_FIELD_NAME
-from django.core.urlresolvers import reverse
+try:
+    from django.urls import reverse
+except ImportError:
+    from django.core.urlresolvers import reverse
 
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
