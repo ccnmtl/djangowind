@@ -1,4 +1,4 @@
-# Copyright (c) 2007-2015, Columbia Center For New Media Teaching And Learning (CCNMTL)
+# Copyright (c) 2007-2017, Columbia Center For New Media Teaching And Learning (CCNMTL)
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="djangowind",
-    version="1.0.1",
+    version="1.1.0",
     author="Anders Pearson",
     author_email="ccnmtl-dev@columbia.edu",
     url="https://github.com/ccnmtl/djangowind",
