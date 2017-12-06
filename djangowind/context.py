@@ -10,6 +10,14 @@ def context_processor(request):
         'WIND_SERVICE': getattr(settings, 'WIND_SERVICE', None),
         'CAS_BASE': getattr(settings, 'CAS_BASE', None),
     }
-    if not request.user.is_authenticated():
+
+    try:
+        # For django 1.8
+        is_authed = request.user.is_authenticated()
+    except TypeError:
+        is_authed = request.user.is_authenticated
+
+    if not is_authed:
         d['login_form'] = AuthenticationForm(request)
+
     return d
