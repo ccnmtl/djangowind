@@ -33,10 +33,8 @@ def main():
             'django.contrib.contenttypes',
             'django.contrib.sessions',
             'djangowind',
-            'django_jenkins',
         ),
         SITE_ID=1,
-        JENKINS_TEST_RUNNER = 'django_jenkins.runner.CITestSuiteRunner',
         TEST_RUNNER='django.test.runner.DiscoverRunner',
 
         TEMPLATES=[
@@ -83,14 +81,10 @@ def main():
         },
     )
 
-    try:
-        # required by Django 1.7 and later
-        django.setup()
-    except AttributeError:
-        pass
+    django.setup()
 
     # Fire off the tests
-    call_command('jenkins')
+    call_command('test')
 
 if __name__ == '__main__':
     main()
