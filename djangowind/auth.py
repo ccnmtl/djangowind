@@ -210,7 +210,7 @@ class BaseAuthBackend(object):
     supports_inactive_user = True
 
     def authenticate(self, ticket=None):
-        raise NotImplemented
+        raise NotImplementedError
 
     def get_user(self, user_id):
         try:
