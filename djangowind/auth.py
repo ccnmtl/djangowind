@@ -226,7 +226,7 @@ class BaseAuthBackend(object):
         except ImportError as e:
             raise ImproperlyConfigured(
                 'Error importing wind handler %s: "%s"' % (module, e))
-        except ValueError as e:
+        except ValueError:
             raise ImproperlyConfigured('Error importing wind handler.')
         try:
             cls = getattr(mod, attr)
