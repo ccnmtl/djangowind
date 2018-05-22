@@ -210,7 +210,7 @@ class BaseAuthBackend(object):
     supports_inactive_user = True
 
     def authenticate(self, ticket=None):
-        raise NotImplemented
+        raise NotImplementedError
 
     def get_user(self, user_id):
         try:
@@ -226,7 +226,7 @@ class BaseAuthBackend(object):
         except ImportError as e:
             raise ImproperlyConfigured(
                 'Error importing wind handler %s: "%s"' % (module, e))
-        except ValueError as e:
+        except ValueError:
             raise ImproperlyConfigured('Error importing wind handler.')
         try:
             cls = getattr(mod, attr)
