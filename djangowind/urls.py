@@ -21,17 +21,17 @@ urlpatterns = [
     url(r'^redirect_to_login/$', redirect_to_login),
 
     url('^password_change/done/', PasswordChangeDoneView.as_view(),
-         name='password_change_done'),
+        name='password_change_done'),
     url('^password_change/', PasswordChangeView.as_view(),
-         name='password_change'),
+        name='password_change'),
 
     url('^password_reset/done/', PasswordResetDoneView.as_view(),
-         name='password_reset_done'),
+        name='password_reset_done'),
     url('^password/reset/confirm/(?P<uidb64>[0-9A-Za-z]+)-(?P<token>.+)/',
         PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     url('^password/reset/complete/',
         PasswordResetCompleteView.as_view(),
         name='password_reset_complete'),
     url('^password_reset/', PasswordResetView.as_view(),
-         name='password_reset')
+        name='password_reset')
 ]
