@@ -12,6 +12,8 @@ matrix:
   exclude:
   - python: '2.7'
     env: DJANGO="Django>=2.0,<2.1"
+  - python: '2.7'
+    env: DJANGO="Django>=2.1"
 install:
 - pip install -q $DJANGO
 - pip install -q -r test_reqs.txt
