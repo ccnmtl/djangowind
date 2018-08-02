@@ -6,7 +6,7 @@ from django.shortcuts import render
 from django.contrib.auth import authenticate
 from django.contrib.auth import login as django_login
 from django.contrib.auth import logout as django_logout
-from django.contrib.auth.views import logout as auth_logout_view
+from django.contrib.auth.views import LogoutView
 from django.conf import settings
 from django.contrib.sites.models import Site
 
@@ -109,8 +109,8 @@ def logout(request, next_page=None,
     if was_wind_login and hasattr(settings, 'CAS_BASE'):
         return HttpResponseRedirect('%scas/logout' % settings.CAS_BASE)
     else:
-        return auth_logout_view(request, next_page, template_name,
-                                redirect_field_name)
+        return LogoutView.as_view()(
+            request, next_page, template_name, redirect_field_name)
 
 
 @csrf_exempt

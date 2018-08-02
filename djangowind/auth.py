@@ -209,7 +209,7 @@ def validate_saml_ticket(ticketid, url):
 class BaseAuthBackend(object):
     supports_inactive_user = True
 
-    def authenticate(self, ticket=None):
+    def authenticate(self, request, ticket=None):
         raise NotImplementedError
 
     def get_user(self, user_id):
@@ -254,7 +254,7 @@ class BaseAuthBackend(object):
 
 
 class CAS2AuthBackend(BaseAuthBackend):
-    def authenticate(self, ticket=None, url=None):
+    def authenticate(self, request, ticket=None, url=None):
         statsd.incr('djangowind.cas2authbackend.authenticate.called')
         if ticket is None:
             return None
@@ -286,7 +286,7 @@ class CAS2AuthBackend(BaseAuthBackend):
 
 
 class SAMLAuthBackend(BaseAuthBackend):
-    def authenticate(self, ticket=None, url=None):
+    def authenticate(self, request, ticket=None, url=None):
         statsd.incr('djangowind.samlauthbackend.authenticate.called')
         if ticket is None:
             return None
