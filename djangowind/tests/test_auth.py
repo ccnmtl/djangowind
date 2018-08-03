@@ -503,7 +503,7 @@ class CAS2AuthBackendTest(TestCase):
 
     def test_authenticate_no_ticket(self, mock_urlopen):
         w = CAS2AuthBackend()
-        self.assertEqual(w.authenticate(None), None)
+        self.assertEqual(w.authenticate(None, None), None)
 
     def test_authenticate_success(self, mock_urlopen):
         self.response.read.return_value = (
@@ -518,6 +518,7 @@ class CAS2AuthBackendTest(TestCase):
 
         w = CAS2AuthBackend()
         r = w.authenticate(
+            None,
             "foo",
             url=("https://slank.ccnmtl.columbia.edu/accounts/"
                  "caslogin/?next=/"))
@@ -532,6 +533,7 @@ class CAS2AuthBackendTest(TestCase):
                 WIND_PROFILE_HANDLERS=['djangowind.auth.DummyProfileHandler']):
             w = CAS2AuthBackend()
             r = w.authenticate(
+                None,
                 "foo",
                 url=("https://slank.ccnmtl.columbia.edu/accounts/"
                      "caslogin/?next=/"))
@@ -554,6 +556,7 @@ class CAS2AuthBackendTest(TestCase):
         u.save()
         w = CAS2AuthBackend()
         r = w.authenticate(
+            None,
             "foo",
             url=("https://slank.ccnmtl.columbia.edu/accounts/"
                  "caslogin/?next=/"))
@@ -579,6 +582,7 @@ class CAS2AuthBackendTest(TestCase):
 
         w = CAS2AuthBackend()
         r = w.authenticate(
+            None,
             "foo",
             url=("https://slank.ccnmtl.columbia.edu/accounts/"
                  "caslogin/?next=/"))
@@ -603,6 +607,7 @@ class CAS2AuthBackendTest(TestCase):
                 WIND_AFFIL_HANDLERS=['djangowind.auth.AffilGroupMapper']):
             w = CAS2AuthBackend()
             r = w.authenticate(
+                None,
                 "foo",
                 url=("https://slank.ccnmtl.columbia.edu/accounts/"
                      "caslogin/?next=/"))
@@ -621,7 +626,7 @@ class SAMLAuthBackendTest(TestCase):
 
     def test_authenticate_no_ticket(self, mock_urlopen):
         w = SAMLAuthBackend()
-        self.assertEqual(w.authenticate(None), None)
+        self.assertEqual(w.authenticate(None, None), None)
 
     def test_authenticate_success(self, mock_urlopen):
         self.response.read.return_value = saml_success_affils()
@@ -629,6 +634,7 @@ class SAMLAuthBackendTest(TestCase):
 
         w = SAMLAuthBackend()
         r = w.authenticate(
+            None,
             "foo",
             url=("https://slank.ccnmtl.columbia.edu/accounts/"
                  "caslogin/?next=/"))
@@ -639,6 +645,7 @@ class SAMLAuthBackendTest(TestCase):
                 WIND_PROFILE_HANDLERS=['djangowind.auth.DummyProfileHandler']):
             w = SAMLAuthBackend()
             r = w.authenticate(
+                None,
                 "foo",
                 url=("https://slank.ccnmtl.columbia.edu/accounts/"
                      "caslogin/?next=/"))
@@ -654,6 +661,7 @@ class SAMLAuthBackendTest(TestCase):
         u.save()
         w = SAMLAuthBackend()
         r = w.authenticate(
+            None,
             "foo",
             url=("https://slank.ccnmtl.columbia.edu/accounts/"
                  "caslogin/?next=/"))
@@ -666,6 +674,7 @@ class SAMLAuthBackendTest(TestCase):
 
         w = SAMLAuthBackend()
         r = w.authenticate(
+            None,
             "foo",
             url=("https://slank.ccnmtl.columbia.edu/accounts/"
                  "caslogin/?next=/"))
@@ -679,6 +688,7 @@ class SAMLAuthBackendTest(TestCase):
                 WIND_AFFIL_HANDLERS=['djangowind.auth.AffilGroupMapper']):
             w = SAMLAuthBackend()
             r = w.authenticate(
+                None,
                 "foo",
                 url=("https://slank.ccnmtl.columbia.edu/accounts/"
                      "caslogin/?next=/"))
