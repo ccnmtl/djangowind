@@ -7,3 +7,4 @@ ve
 docs/_build/
 .project
 .pydevproject
+djangowind.egg-info
