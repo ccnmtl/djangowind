@@ -2,6 +2,6 @@ coverage==4.5.2
 mock==2.0.0
 flake8==3.6.0
 pep8==1.7.1
-pyflakes==2.0.0
+pyflakes==2.1.0
 statsd==3.3.0
 django-statsd-mozilla==0.4.0
