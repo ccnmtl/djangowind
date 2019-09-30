@@ -380,7 +380,7 @@ LDAP_ATTRS = [
 def ldap3_lookup(uni=""):
     statsd.incr("djangowind.ldap3_lookup")
     LDAP_SERVER = "ldap.columbia.edu"
-    BASE_DN = "o=Columbia University, c=us"
+    BASE_DN = "o=Columbia University,c=us"
     if hasattr(settings, 'LDAP_SERVER'):
         LDAP_SERVER = settings.LDAP_SERVER
     if hasattr(settings, 'BASE_DN'):
@@ -405,7 +405,7 @@ def ldap3_lookup(uni=""):
 def python_ldap_lookup(uni=""):
     statsd.incr('djangowind.ldap_lookup')
     LDAP_SERVER = "ldap.columbia.edu"
-    BASE_DN = "o=Columbia University, c=us"
+    BASE_DN = "o=Columbia University,c=us"
     if hasattr(settings, 'LDAP_SERVER'):
         LDAP_SERVER = settings.LDAP_SERVER
     if hasattr(settings, 'BASE_DN'):
