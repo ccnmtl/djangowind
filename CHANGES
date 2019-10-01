@@ -1,7 +1,7 @@
 1.2.2
 ==================
-
 * Remove Django 1.8 support
+* Fix ldap3 compatibility issue: remove white space in DN string
 
 1.2.1 (2018-08-03)
 ==================
