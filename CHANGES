@@ -2,6 +2,7 @@
 ==================
 * Remove Django 1.8 support
 * Fix ldap3 compatibility issue: remove white space in DN string
+* Use '' for default CAS_DEFAULT_NEXT setting
 
 1.2.1 (2018-08-03)
 ==================
