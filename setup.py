@@ -1,4 +1,4 @@
-# Copyright (c) 2007-2017, Columbia Center For New Media Teaching And Learning (CCNMTL)
+# Copyright (c) 2007-2020, Columbia University's Center for Teaching and Learning (CTL)
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,9 +27,9 @@ from setuptools import setup, find_packages
 
 setup(
     name="djangowind",
-    version="1.2.2",
+    version="1.2.3",
     author="Anders Pearson",
-    author_email="ccnmtl-dev@columbia.edu",
+    author_email="ctl-dev@columbia.edu",
     url="https://github.com/ccnmtl/djangowind",
     description="Django Authentication backend for CAS",
     long_description="Django Authentication backend for CAS and associated helpers",
