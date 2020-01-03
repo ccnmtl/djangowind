@@ -124,12 +124,7 @@ def caslogin(request, redirect_field_name=REDIRECT_FIELD_NAME):
         if not request.is_secure():
             protocol = "https"
 
-        # if we didn't have one stashed in the session
-        # the best guess is that it was for django admin
-        # so, this is a bit magic, but I don't have any better
-        # ideas right now
-        default_next = getattr(settings, 'CAS_DEFAULT_NEXT',
-                               "/admin/&this_is_the_login_form=1")
+        default_next = getattr(settings, 'CAS_DEFAULT_NEXT', '')
         url = request.session.get(
             'cas_service_url',
             protocol + "://" + request.get_host() + "/accounts/caslogin/"
