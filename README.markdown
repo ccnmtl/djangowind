@@ -274,5 +274,4 @@ belong to the Groups that match their affils would look like:
 * `CAS_TICKETID_FIELD_NAME` - defaults to `ticketid`. Some CAS
   providers expect `ticket` instead. Set that here.
 * `CAS_DEFAULT_NEXT` - default redirect if there isn't a `next`
-  already stashed in the session. This mostly happens with django
-  admin, so the default is `/admin/&this_is_the_login_form=1`
+  already stashed in the session. This defaults to the empty string: `''`

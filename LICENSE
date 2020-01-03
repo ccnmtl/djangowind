@@ -1,20 +1,20 @@
 djangowind is a django-based helper app designed to handle SSO authentication (Currently both CAS and 
 the Columbia-specific WIND protocols are supported), and map the authorizations returned to 
-the Django Auth model. djangowind was eveloped at the Columbia Center for New Media Teaching and Learning (http://ccnmtl.columbia.edu).
+the Django Auth model. djangowind was developed at the Columbia Center for Teaching and Learning (https://ctl.columbia.edu).
 
 djangowind depends on several other free open-source software as
 dependencies, which come with other licenses (compatible with the GPL)
 specified in [ test_reqs.txt ] including Django
 (http://www.djangoproject.com/) which is BSD-licensed. 
 
-    Copyright (C) 2014 Columbia Center for New Media Teaching and Learning
-    ccnmtl@columbia.edu
+    Copyright (C) 2014-2020 Columbia Center for Teaching and Learning
+    ctl-dev@columbia.edu
 
     Authors: 
     Anders Pearson <anders@columbia.edu>
     Nik Nyby <nnyby@columbia.edu>
     Susan Dreher <sdreher@columbia.edu>
-    And, the entire team at CCNMTL.
+    And, the entire team at CTL.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
