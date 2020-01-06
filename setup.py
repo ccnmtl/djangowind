@@ -1,4 +1,5 @@
-# Copyright (c) 2007-2020, Columbia University's Center for Teaching and Learning (CTL)
+# Copyright (c) 2007-2020, Columbia University's Center for Teaching
+# and Learning (CTL)
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -23,7 +24,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from setuptools import setup, find_packages
+from setuptools import setup
 
 setup(
     name="djangowind",
@@ -32,14 +33,14 @@ setup(
     author_email="ctl-dev@columbia.edu",
     url="https://github.com/ccnmtl/djangowind",
     description="Django Authentication backend for CAS",
-    long_description="Django Authentication backend for CAS and associated helpers",
-    install_requires = [],
-    scripts = [],
-    license = "BSD",
-    platforms = ["any"],
+    long_description="Django Authentication backend for " +
+    "CAS and associated helpers",
+    install_requires=[],
+    scripts=[],
+    license="BSD",
+    platforms=["any"],
     zip_safe=False,
-    package_data = {'' : ['*.*']},
+    package_data={'': ['*.*']},
     packages=['djangowind'],
     test_suite='nose.collector',
-    )
-    
+)

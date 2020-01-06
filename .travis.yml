@@ -24,7 +24,7 @@ install:
 - pip install coveralls
 script:
 - python runtests.py
-- flake8 djangowind --max-complexity=12
+- flake8 djangowind *.py
 - coverage run --source=djangowind runtests.py
 after_success:
 - coveralls

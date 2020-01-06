@@ -52,18 +52,18 @@ def main():
             },
         ],
 
-        TEST_PROJECT_APPS = (
+        TEST_PROJECT_APPS=(
             'djangowind',
         ),
-        COVERAGE_EXCLUDES_FOLDERS = ['migrations'],
-        ROOT_URLCONF = 'djangowind.tests.urls',
+        COVERAGE_EXCLUDES_FOLDERS=['migrations'],
+        ROOT_URLCONF='djangowind.tests.urls',
         SOUTH_TESTS_MIGRATE=False,
 
-        PROJECT_APPS = [
+        PROJECT_APPS=[
             'djangowind',
         ],
         # Django replaces this, but it still wants it. *shrugs*
-        DATABASES = {
+        DATABASES={
             'default': {
                 'ENGINE': 'django.db.backends.sqlite3',
                 'NAME': ':memory:',
@@ -79,6 +79,7 @@ def main():
 
     # Fire off the tests
     call_command('test')
+
 
 if __name__ == '__main__':
     main()
