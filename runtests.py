@@ -1,7 +1,7 @@
 """ run tests for djangowind
 
 $ virtualenv ve
-$ ./ve/bin/pip install Django==1.11.4
+$ ./ve/bin/pip install Django==2.2.16
 $ ./ve/bin/pip install -r test_reqs.txt
 $ ./ve/bin/python runtests.py
 """
