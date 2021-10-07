@@ -12,7 +12,6 @@ from django.core.exceptions import ImproperlyConfigured
 from django.utils.encoding import smart_bytes
 from django_statsd.clients import statsd
 
-
 try:
     from urllib.request import Request
 except ImportError:
@@ -37,6 +36,9 @@ ldap3 = None
 ldap = None
 try:
     import ldap3
+    from ldap3.core.exceptions import (
+        LDAPSocketReceiveError, LDAPCommunicationError
+    )
 except ImportError:
     try:
         import ldap
@@ -388,9 +390,14 @@ def ldap3_lookup(uni=""):
     baseDN = BASE_DN
     searchFilter = "(uni=%s)" % uni
     server = ldap3.Server(LDAP_SERVER, get_info=ldap3.ALL)
-    conn = ldap3.Connection(server, auto_bind=True)
-    conn.search(baseDN, searchFilter, attributes=LDAP_ATTRS)
+
     results_dict = {'found': False, 'lastname': '', 'firstname': ''}
+    try:
+        conn = ldap3.Connection(server, auto_bind=True)
+    except (LDAPSocketReceiveError, LDAPCommunicationError):
+        return results_dict
+
+    conn.search(baseDN, searchFilter, attributes=LDAP_ATTRS)
 
     if len(conn.response) > 0:
         response = conn.response[0]

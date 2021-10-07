@@ -28,7 +28,7 @@ from setuptools import setup
 
 setup(
     name="djangowind",
-    version="1.2.3",
+    version="1.2.4",
     author="Anders Pearson",
     author_email="ctl-dev@columbia.edu",
     url="https://github.com/ccnmtl/djangowind",
