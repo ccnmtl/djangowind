@@ -8,7 +8,7 @@ pep8==1.7.1
 pyflakes==2.4.0
 statsd==3.3.0
 django-statsd-mozilla==0.4.0
-pycodestyle==2.7.0
+pycodestyle==2.8.0
 mccabe==0.6.1
 python-dateutil==2.8.2
 text-unidecode==1.3
