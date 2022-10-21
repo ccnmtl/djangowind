@@ -30,6 +30,7 @@ def main():
         ),
         SITE_ID=1,
         TEST_RUNNER='django.test.runner.DiscoverRunner',
+        SECRET_KEY='test key',
 
         TEMPLATES=[
             {
