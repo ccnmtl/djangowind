@@ -1,4 +1,4 @@
-# Copyright (c) 2007-2020, Columbia University's Center for Teaching
+# Copyright (c) 2007-2022, Columbia University's Center for Teaching
 # and Learning (CTL)
 # All rights reserved.
 #
@@ -28,7 +28,7 @@ from setuptools import setup
 
 setup(
     name="djangowind",
-    version="1.2.4",
+    version="1.2.5",
     author="Anders Pearson",
     author_email="ctl-dev@columbia.edu",
     url="https://github.com/ccnmtl/djangowind",
