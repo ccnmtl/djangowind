@@ -9,7 +9,7 @@ from xml.parsers.expat import ExpatError
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import ImproperlyConfigured
-from django.utils.encoding import smart_bytes
+from django.utils.encoding import smart_bytes, smart_str
 from django_statsd.clients import statsd
 
 try:
@@ -75,7 +75,7 @@ def validate_cas2_ticket(ticketid, url):
         if len(successes) > 0:
             statsd.incr('djangowind.validate_cas2_ticket.success')
             users = dom.getElementsByTagName('cas:user')
-            username = str(users[0].firstChild.data)
+            username = smart_str(users[0].firstChild.data).strip()
             groups = [username]
             for g in dom.getElementsByTagName('cas:affiliation'):
                 groups.append(g.firstChild.data)
@@ -173,7 +173,7 @@ def validate_saml_ticket(ticketid, url):
             statsd.incr('djangowind.validate_saml_ticket.invalid')
             return (False, "CAS did not return a valid response.", [])
 
-        user = identifiers[0].text
+        user = smart_str(identifiers[0].text).strip()
 
         # pull out attributes. they come packaged up like this:
 

@@ -1,3 +1,7 @@
+1.2.5
+==================
+* Strip username's whitespace on auth
+
 1.2.4 (2021-10-07)
 ==================
 * Don't crash when ldap connection fails

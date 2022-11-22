@@ -97,6 +97,27 @@ class ValidateCas2TicketTest(TestCase):
             "&service=https%3A//slank.ccnmtl.columbia.edu/accounts/"
             "caslogin/%3Fnext%3D/")
 
+    def test_validate_ticket_whitespace_success(self, mock_urlopen):
+        self.response.read.return_value = (
+            "\n\n\n<cas:serviceResponse xmlns:cas='http://www."
+            "yale.edu/tp/cas'>\n\t<cas:authenticationSuccess>\n"
+            "\t\t<cas:user>anp8 </cas:user>\n"
+            "\n"
+            "\n"
+            "\t</cas:authenticationSuccess>\n"
+            "</cas:serviceResponse>\n")
+        mock_urlopen.return_value = self.response
+
+        self.assertEqual(
+            validate_cas2_ticket(
+                "foo",
+                "https://slank.ccnmtl.columbia.edu/accounts/caslogin/?next=/"),
+            (True, 'anp8', ['anp8']))
+        mock_urlopen.assert_called_with(
+            "https://cas.columbia.edu/cas/serviceValidate?ticket=foo"
+            "&service=https%3A//slank.ccnmtl.columbia.edu/accounts/"
+            "caslogin/%3Fnext%3D/")
+
     def test_validate_ticket_success_with_groups(self, mock_urlopen):
         self.response.read.return_value = (
             "\n\n\n<cas:serviceResponse xmlns:cas='http://www."
