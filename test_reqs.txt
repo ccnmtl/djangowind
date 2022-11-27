@@ -3,7 +3,7 @@ mock>=3.0.5,<5.0.0
 importlib-metadata<5.2  # for flake8
 typing_extensions==4.4.0
 zipp==3.10.0  # for flake8
-flake8==5.0.4
+flake8==6.0.0
 pep8==1.7.1
 pyflakes==3.0.1
 statsd==4.0.1
