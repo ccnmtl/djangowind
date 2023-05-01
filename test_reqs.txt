@@ -1,4 +1,4 @@
-coverage==7.2.4
+coverage==7.2.5
 mock>=3.0.5,<6.0.0
 importlib-metadata<6.7  # for flake8
 typing_extensions==4.5.0
