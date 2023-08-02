@@ -340,7 +340,7 @@ def _handle_ldap_entry(result_data):
 
 # some of the things we get back are lists, some are strings
 def force_list(s):
-    if type(s) == list:
+    if isinstance(s, list):
         return s
     return [s]
 
