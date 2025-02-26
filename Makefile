@@ -3,11 +3,11 @@ VE ?= ./ve
 REQUIREMENTS ?= test_reqs.txt
 SYS_PYTHON ?= python3
 PY_SENTINAL ?= $(VE)/sentinal
-WHEEL_VERSION ?= 0.37.1
-PIP_VERSION ?= 22.3
+WHEEL_VERSION ?= 0.45.1
+PIP_VERSION ?= 25.0.1
 MAX_COMPLEXITY ?= 12
 PY_DIRS ?= $(APP)
-DJANGO ?= "Django==3.2.16"
+DJANGO ?= "Django==4.2.19"
 
 FLAKE8 ?= $(VE)/bin/flake8
 PIP ?= $(VE)/bin/pip
@@ -41,4 +41,4 @@ flake8: $(PY_SENTINAL)
 coverage: $(PY_SENTINAL)
 	$(COVERAGE) run --source=djangowind runtests.py
 
-.PHONY: flake8 test jshint jscs clean
+.PHONY: flake8 test clean

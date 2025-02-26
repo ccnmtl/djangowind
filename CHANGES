@@ -1,3 +1,8 @@
+1.2.6
+==================
+* Add Django 4.2 support
+* Use Django's get_current_site() shortcut where possible
+
 1.2.5 (2022-11-22)
 ==================
 * Strip username's whitespace on auth
