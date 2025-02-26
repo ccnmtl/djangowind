@@ -8,13 +8,10 @@ from django.contrib.auth import login as django_login
 from django.contrib.auth import logout as django_logout
 from django.contrib.auth.views import LogoutView
 from django.conf import settings
-from django.contrib.sites.models import Site
+from django.contrib.sites.shortcuts import get_current_site
 
 from django.contrib.auth.forms import AuthenticationForm
-try:
-    from django.contrib.sites.requests import RequestSite
-except ImportError:
-    from django.contrib.sites.models import RequestSite
+
 from django.contrib.auth import REDIRECT_FIELD_NAME
 try:
     from django.urls import reverse
@@ -73,10 +70,7 @@ def login(request, template_name='registration/login.html',
             request.get_host(), reverse('cas-login'),
             request.GET.get('next', '/')))
 
-    if Site._meta.installed:
-        current_site = Site.objects.get_current()
-    else:
-        current_site = RequestSite(request)
+    current_site = get_current_site(request)
 
     return render(request, template_name, {
         'form': form,
