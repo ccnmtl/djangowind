@@ -5,7 +5,7 @@ typing_extensions==4.12.2
 zipp==3.21.0  # for flake8
 flake8==7.1.1
 pep8==1.7.1
-pyflakes==3.2.0
+pyflakes==3.3.2
 statsd==4.0.1
 django-statsd-mozilla==0.4.0
 pycodestyle==2.12.1
