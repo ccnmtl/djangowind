@@ -1,6 +1,5 @@
 dist
 build
-.coverage
 reports
 ve
 *.pyc
