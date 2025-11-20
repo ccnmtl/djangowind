@@ -1,5 +1,4 @@
 [![Actions Status](https://github.com/ccnmtl/djangowind/workflows/build-and-test/badge.svg)](https://github.com/ccnmtl/djangowind/actions)
-[![Coverage Status](https://coveralls.io/repos/github/ccnmtl/djangowind/badge.svg?branch=master)](https://coveralls.io/github/ccnmtl/djangowind?branch=master)
 [![Documentation Status](https://readthedocs.org/projects/djangowind/badge/?version=latest)](https://djangowind.readthedocs.org/en/latest/?badge=latest)
 
 ## Basic Usage
