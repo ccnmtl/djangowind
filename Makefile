@@ -11,9 +11,8 @@ DJANGO ?= "Django==4.2.19"
 
 FLAKE8 ?= $(VE)/bin/flake8
 PIP ?= $(VE)/bin/pip
-COVERAGE ?=$(VE)/bin/coverage
 
-all: flake8 coverage
+all: flake8
 
 clean:
 	rm -rf $(VE)
@@ -36,9 +35,5 @@ test: $(REQUIREMENTS) $(PY_SENTINAL)
 
 flake8: $(PY_SENTINAL)
 	$(FLAKE8) $(PY_DIRS) --max-complexity=$(MAX_COMPLEXITY)
-
-
-coverage: $(PY_SENTINAL)
-	$(COVERAGE) run --source=djangowind runtests.py
 
 .PHONY: flake8 test clean
